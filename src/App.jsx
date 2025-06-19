@@ -10,13 +10,13 @@ import Products from './Component/Pages/Products';
 import Customers from './Component/Pages/Customers';
 import ProductStockList from './Component/Pages/ProductStockList';
 import StockDashboard from './Component/Pages/StockDashboard';
-import AdminProfile from './Component/Pages/AdminProfile'; 
+import AdminProfile from './Component/Pages/AdminProfile';
 import UserManagement from './Component/Pages/UserManagement';
 import TopNavbar from './Component/TopNavbar';
 
 const MainLayout = ({ activePage, setActivePage }) => (
   <div className="flex flex-col h-screen overflow-hidden">
-    <TopNavbar setActivePage={setActivePage}/>
+    <TopNavbar setActivePage={setActivePage} />
     <div className="flex flex-1 overflow-hidden">
       <SideNavbar activeItem={activePage} setActivePage={setActivePage} />
       <main className="flex-1 overflow-y-auto p-4">
@@ -26,7 +26,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'Product Stock List' && <ProductStockList />}
         {activePage === 'Stock Summary' && <StockDashboard />}
         {activePage === 'Admin Management' && <AdminProfile />}
-        {activePage === 'User Management' && <UserManagement />}
+        {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>
     </div>
   </div>
@@ -43,7 +43,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route
           path="/admin"
-          element={<MainLayout activePage={activePage} setActivePage={setActivePage} />}/>        
+          element={<MainLayout activePage={activePage} setActivePage={setActivePage} />} />
       </Routes>
     </Router>
   );

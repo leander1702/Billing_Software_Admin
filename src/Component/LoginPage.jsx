@@ -1,58 +1,55 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../../src/assets/ATS LOGO BLUE.svg'; // Ensure this path is correct
-import bill from '../../src/assets/IMG1.svg'; // Ensure this path is correct
+import axios from 'axios';
+import logo from '../../src/assets/ATS LOGO BLUE.svg';
+import bill from '../../src/assets/IMG1.svg';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    if (!username || !password) {
-      setError('Please enter both username and password.');
-      setIsLoading(false);
-      return;
+  if (!phoneNumber || !password) {
+    setError('Please enter both phone number and password.');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const res = await axios.get("http://localhost:5000/api/credentials/admin");
+
+    const adminData = res.data; // Single admin object
+
+    if (
+      adminData.contactNumber === phoneNumber &&
+      adminData.password === password
+    ) {
+      console.log("Login success", adminData);
+      navigate("/admin");
+    } else {
+      setError("Invalid phone number or password");
     }
-
-    try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Invalid credentials");
-      } else {
-        // Login successful
-        console.log("Login success", data);
-        navigate("/admin");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error(err);
+    setError("Login failed. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-gray-50 p-4 sm:p-6 lg:p-6 overflow-hidden">
-
-      <div className="flex w-full max-w-5xl rounded-2xl overflow-hidden shadow-xl bg-white min-h-[550px] ">
-
-        {/* Left Side - Branding */}
+      <div className="flex w-full max-w-5xl rounded-2xl overflow-hidden shadow-xl bg-white min-h-[550px]">
+        {/* Left side branding */}
         <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 p-12 relative">
           <div className="absolute top-0 left-0 w-full h-full opacity-10">
             <div className="absolute -top-16 -left-16 w-60 h-60 rounded-full bg-white opacity-5"></div>
@@ -89,21 +86,19 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
+        {/* Right side - Login Form */}
         <div className="flex-1 flex items-center justify-center p-8 bg-white">
           <div className="w-full max-w-md">
             {/* Company header */}
             <div className="flex items-center justify-center lg:justify-start mb-8">
-              <div className="">
-                <img src={logo} alt="Company Logo" className="h-8 w-8" />
-              </div>
+              <img src={logo} alt="Company Logo" className="h-8 w-8" />
               <div className="ml-3">
                 <h2 className="text-sm font-bold text-gray-800">Billing Software</h2>
                 <p className="text-xs text-gray-500">Enterprise Edition</p>
               </div>
             </div>
 
-            {/* Sign in heading */}
+            {/* Heading */}
             <div className="mb-6 text-center lg:text-left">
               <h1 className="text-xl font-semibold text-gray-800 mb-1">Sign in to your account</h1>
               <p className="text-sm text-gray-500">Start managing your invoices efficiently.</p>
@@ -122,55 +117,36 @@ const LoginPage = () => {
               </div>
             )}
 
-            {/* Login Form */}
+            {/* Login form */}
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* Username */}
+              {/* Phone Number */}
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your username"
-                  />
-                </div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                  placeholder="Enter your phone number"
+                  className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
               {/* Password */}
               <div>
-                <div className="flex justify-between mb-1">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <a href="#" className="text-xs text-blue-600 hover:text-blue-500">Forgot password?</a>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="••••••••"
-                  />
-                </div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
               {/* Remember Me */}
@@ -185,7 +161,7 @@ const LoginPage = () => {
                 <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">Remember me</label>
               </div>
 
-              {/* Submit */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -193,24 +169,9 @@ const LoginPage = () => {
               >
                 {isLoading ? (
                   <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
+                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     Signing in...
                   </>
@@ -223,13 +184,11 @@ const LoginPage = () => {
                   </>
                 )}
               </button>
-
             </form>
           </div>
         </div>
       </div>
     </div>
-
   );
 };
 

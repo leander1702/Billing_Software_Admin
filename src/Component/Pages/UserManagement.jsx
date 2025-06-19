@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FiEdit, FiTrash2, FiSave, FiX, FiUser, FiBriefcase, FiCreditCard,FiUserX  } from "react-icons/fi";
 
-const UserManagement = () => {
+const UserManagement = ({ setActivePage }) => {
   const [latestCompany, setLatestCompany] = useState(null);
   const [admin, setAdmin] = useState(null);
   const [users, setUsers] = useState([]);
@@ -146,7 +146,7 @@ const UserManagement = () => {
           <div className="bg-blue-100 p-4 text-black flex justify-between items-center">
             <h2 className="text-lg font-semibold">Admin Credentials</h2>
             <button
-              onClick={() => handleEdit('')}
+              onClick={() => setActivePage('Admin Management')}
               className="p-2 bg-white text-blue-600 rounded-md hover:bg-blue-50 shadow-sm"
             >
               <FiEdit className="text-lg" />
@@ -191,7 +191,7 @@ const UserManagement = () => {
               <h2 className="text-lg font-semibold">Company Information</h2>
             </div>
             <button
-              onClick={() => handleEdit('company')}
+               onClick={() => setActivePage('Admin Management')}
               className="p-2 bg-white text-blue-600 rounded-md hover:bg-blue-50 shadow-sm"
             >
               <FiEdit className="text-lg" />
@@ -271,7 +271,7 @@ const UserManagement = () => {
               {/* User Info */}
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{user.cashierName}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{user.cashierName?.replace(/\b\w/g, char => char.toUpperCase())}</h3>
                   <p className="text-sm text-gray-500">ID: {user.cashierId}</p>
                 </div>
 

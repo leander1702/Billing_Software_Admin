@@ -1,39 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FiHome, FiCreditCard, FiUsers, FiPackage, FiFileText, FiArchive,
-  FiDollarSign, FiPieChart, FiSettings, FiUser, FiCloud,FiLogOut,
-  FiChevronLeft, FiChevronRight
+  FiDollarSign, FiPieChart, FiSettings, FiUser, FiCloud,
+  FiChevronLeft, FiChevronRight, FiLogOut
 } from 'react-icons/fi';
 
-
-const NavItem = ({ icon: Icon, label, active, onClick }) => (
+// NavItem component for individual navigation links
+const NavItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
   <li
-    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${active ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-      }`}
+    className={`w-full flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 ease-in-out
+      ${active ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'}
+      ${collapsed ? 'justify-center' : ''}`}
     onClick={onClick}
+    title={collapsed ? label : ''}
   >
-    <Icon className="text-lg" />
-    {!label ? null : <span className="ml-3 font-medium">{label}</span>}
+    <Icon className={`text-xl ${collapsed ? '' : 'mr-3'}`} />
+    {!collapsed && <span className="font-medium text-sm">{label}</span>}
   </li>
 );
 
+// SideNavbar component
 const SideNavbar = ({ activeItem, setActivePage }) => {
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [company, setCompany] = useState({ name: 'Company Name' });
-  const [admin, setAdmin] = useState({ name: 'User Name' });
+  const [company, setCompany] = useState({ businessName: 'Company Name' });
+  const [admin, setAdmin] = useState({});
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/companies')
       .then(res => {
         if (res.data.length > 0) {
           setCompany(res.data[0]);
-          setAdmin(res.data[0]?.admin || { name: 'User Name' });
         }
       })
       .catch(err => console.error('Error fetching company data:', err));
+
+    axios.get('http://localhost:5000/api/credentials/admin')
+      .then(res => {
+        if (res.data) {
+          setAdmin(res.data);
+        }
+      })
+      .catch(err => console.error('Error fetching admin data:', err));
   }, []);
 
+  // Define navigation items
   const navItems = [
     { icon: FiHome, label: 'Dashboard' },
     { icon: FiCreditCard, label: 'Billing / Invoices' },
@@ -47,107 +60,59 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiCloud, label: 'Backup / Sync' }
   ];
 
+  const handleLogout = () => {
+    localStorage.clear(); // clear auth/session if needed
+    navigate('/');
+  };
+
   return (
-    <aside className={`flex flex-col h-screen bg-white border-r transition-all duration-300 ${collapsed ? 'w-24' : 'w-64'}`}>
-      {/* Header */}
-      <div className="flex items-center p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-  
-        {!collapsed && (
-          <div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 min-w-0"
-          >
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-800 truncate">
-              {company.businessName}
-            </h1>          
-          </div>
-        )}
-
-      <div className="flex items-center ">
-
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden">
-              <img
-                src={`http://localhost:5000${company.logoUrl}`}
-                alt="Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/150';
-                }}
-              />
-            </div>
-            {!collapsed && (
-              <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold shadow-sm">
-                ✓
-              </div>
-            )}
-          </div>
-
-          <button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setCollapsed(!collapsed)}
-            className="ml-2 p-2 rounded-lg bg-white text-gray-500 shadow-sm hover:shadow-md"
-          >
-            {collapsed ? <FiChevronRight size={18}  /> : <FiChevronLeft size={18} />}
-          </button>
-        </div>
-      </div>
-
+    <aside className={`relative flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
+      
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto">
-        <ul className="space-y-1 p-2">
+      <nav className="flex-1 overflow-y-auto mt-2">
+        <ul className="space-y-2 px-3 py-2">
           {navItems.map(({ icon, label }) => (
             <NavItem
               key={label}
               icon={icon}
-              label={!collapsed ? label : ''}
+              label={label}
               active={activeItem === label}
               onClick={() => setActivePage(label)}
+              collapsed={collapsed}
             />
           ))}
+
+          {/* Logout */}
+          <li className="pt-3 border-t border-gray-400">
+            <button
+              onClick={handleLogout}
+              className={`flex items-center justify-center w-full px-3 py-2 text-sm font-medium bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition duration-200 ease-in-out`}
+              title="Logout"
+            >
+              <FiLogOut className={`text-lg ${collapsed ? '' : 'mr-2'}`} />
+              {!collapsed && "Logout"}
+            </button>
+          </li>
         </ul>
+
+        {/* Footer with company name */}
+        {!collapsed && (
+          <div className="text-xs text-gray-500  text-center">
+            &copy; {new Date().getFullYear()} {company.businessName}
+          </div>
+        )}
       </nav>
 
-      {/* Profile UI – clickable to activate 'admin-profile' */}
-        <div className="border-t border-gray-100 p-3 bg-gradient-to-r from-gray-50 to-blue-50">
-        {!collapsed ? (
-          <div 
-            whileHover={{ scale: 1.01 }}
-            className={`flex items-center p-3 rounded-xl cursor-pointer transition-all ${activeItem === 'User Management' ? 
-              'bg-white shadow-md' : 'hover:bg-white hover:shadow-sm'
-            }`}
-            onClick={() => setActivePage('User Management')}
-          >
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow">
-                {admin.name?.charAt(0).toUpperCase() || 'A'}
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px]">
-                <FiUser size={8} />
-              </div>
-            </div>
-            <div className="ml-3 overflow-hidden">
-              <p className="text-sm font-medium text-gray-900 truncate">{admin.name}</p>
-              <p className="text-xs text-gray-500 flex items-center">
-                <span>Admin</span>
-              
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center p-2">
-            <div 
-              className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow cursor-pointer"
-              onClick={() => setActivePage('User Management')}
-            >
-              {admin.name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-          </div>
-        )}       
-      </div>
+      {/* Collapse/Expand Button */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className={`absolute top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-blue-600 bg-white shadow-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${collapsed ? '-right-5' : '-right-5'}`}
+        title={collapsed ? 'Expand' : 'Collapse'}
+      >
+        {collapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
+      </button>
     </aside>
   );
 };
+
 export default SideNavbar;

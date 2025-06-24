@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FiEdit, FiTrash2, FiSave, FiX, FiUser, FiBriefcase, FiCreditCard,FiUserX  } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiSave, FiX, FiUser, FiBriefcase, FiCreditCard, FiUserX } from "react-icons/fi";
 
 const UserManagement = ({ setActivePage }) => {
   const [latestCompany, setLatestCompany] = useState(null);
@@ -191,7 +191,7 @@ const UserManagement = ({ setActivePage }) => {
               <h2 className="text-lg font-semibold">Company Information</h2>
             </div>
             <button
-               onClick={() => setActivePage('Admin Management')}
+              onClick={() => setActivePage('Admin Management')}
               className="p-2 bg-white text-blue-600 rounded-md hover:bg-blue-50 shadow-sm"
             >
               <FiEdit className="text-lg" />
@@ -244,121 +244,120 @@ const UserManagement = ({ setActivePage }) => {
         </div>
       </div>
 
-  {/* Cashier Users Section */}
-<div className="bg-white rounded-xl shadow-lg overflow-hidden">
-  {/* Header */}
-  <div className="bg-blue-100  p-4 text-black flex justify-between items-center">
-    <div className="flex items-center space-x-3">     
-      <h2 className="text-lg font-semibold">Cashier Users</h2>
-    </div>
-    {users.length > 0 && (
-      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-        {users.length} {users.length === 1 ? 'cashier' : 'cashiers'}
-      </span>
-    )}
-  </div>
-
-  {/* Content */}
-  <div className="p-6">
-    {users.length > 0 ? (
-      <div className="space-y-4">
-        {users.map((user) => (
-          <div
-            key={user._id}
-            className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
-          >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              {/* User Info */}
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{user.cashierName?.replace(/\b\w/g, char => char.toUpperCase())}</h3>
-                  <p className="text-sm text-gray-500">ID: {user.cashierId}</p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Counter Number</label>
-                  {editing.users[user._id] ? (
-                    <input
-                      type="text"
-                      name="counterNum"
-                      value={formData.users[user._id]?.counterNum || ''}
-                      onChange={(e) => handleChange(e, 'user', user._id)}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-2 border"
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700">{user.counterNum}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Contact Number</label>
-                  {editing.users[user._id] ? (
-                    <input
-                      type="text"
-                      name="contactNumber"
-                      value={formData.users[user._id]?.contactNumber || ''}
-                      onChange={(e) => handleChange(e, 'user', user._id)}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-2 border"
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700">{user.contactNumber}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2">
-                {editing.users[user._id] ? (
-                  <>
-                    <button
-                      onClick={() => handleSave('user', user._id)}
-                      className="p-2 bg-green-100 text-green-600 rounded-md hover:bg-green-200 transition-colors"
-                      title="Save"
-                    >
-                      <FiSave className="text-lg" />
-                    </button>
-                    <button
-                      onClick={() => handleCancel('user', user._id)}
-                      className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors"
-                      title="Cancel"
-                    >
-                      <FiX className="text-lg" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleEdit('user', user._id)}
-                      className="p-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors"
-                      title="Edit"
-                    >
-                      <FiEdit className="text-lg" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="text-lg" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+      {/* Cashier Users Section */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-blue-100  p-4 text-black flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-lg font-semibold">Cashier Users</h2>
           </div>
-        ))}
+          {users.length > 0 && (
+            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+              {users.length} {users.length === 1 ? 'cashier' : 'cashiers'}
+            </span>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {users.length > 0 ? (
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div
+                  key={user._id}
+                  className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    {/* User Info */}
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{user.cashierName?.replace(/\b\w/g, char => char.toUpperCase())}</h3>
+                        <p className="text-sm text-gray-500">ID: {user.cashierId}</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Counter Number</label>
+                        {editing.users[user._id] ? (
+                          <input
+                            type="text"
+                            name="counterNum"
+                            value={formData.users[user._id]?.counterNum || ''}
+                            onChange={(e) => handleChange(e, 'user', user._id)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-2 border"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-700">{user.counterNum}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Contact Number</label>
+                        {editing.users[user._id] ? (
+                          <input
+                            type="text"
+                            name="contactNumber"
+                            value={formData.users[user._id]?.contactNumber || ''}
+                            onChange={(e) => handleChange(e, 'user', user._id)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-2 border"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-700">{user.contactNumber}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-2">
+                      {editing.users[user._id] ? (
+                        <>
+                          <button
+                            onClick={() => handleSave('user', user._id)}
+                            className="p-2 bg-green-100 text-green-600 rounded-md hover:bg-green-200 transition-colors"
+                            title="Save"
+                          >
+                            <FiSave className="text-lg" />
+                          </button>
+                          <button
+                            onClick={() => handleCancel('user', user._id)}
+                            className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors"
+                            title="Cancel"
+                          >
+                            <FiX className="text-lg" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEdit('user', user._id)}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors"
+                            title="Edit"
+                          >
+                            <FiEdit className="text-lg" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user._id)}
+                            className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors"
+                            title="Delete"
+                          >
+                            <FiTrash2 className="text-lg" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FiUserX className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No cashier users</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by adding a new cashier.</p>
+            </div>
+          )}
+        </div>
       </div>
-    ) : (
-      <div className="text-center py-8">
-        <FiUserX className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No cashier users</h3>
-        <p className="mt-1 text-sm text-gray-500">Get started by adding a new cashier.</p>
-      </div>
-    )}
-  </div>
-</div>
     </div>
   );
 };
-
 export default UserManagement;

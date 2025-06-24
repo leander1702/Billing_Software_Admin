@@ -148,6 +148,51 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
             }
         }, 100);
     };
+    const handleBarcodeSearch = async (barcode) => {
+        if (!barcode) return;
+
+        try {
+            const res = await axios.get(`http://localhost:5000/api/products/barcode/${barcode}`);
+            const data = res.data;
+
+            if (!data) {
+                console.warn("Product not found for barcode:", barcode);
+                return;
+            }
+
+            setFormData((prev) => ({
+                ...prev,
+                category: data.category || '',
+                productName: data.productName || '',
+                brand: data.brand || '',
+                baseUnit: data.baseUnit || 'piece',
+                secondaryUnit: data.secondaryUnit || '',
+                conversionRate: data.conversionRate || 0,
+                mrp: data.mrp?.toString() || '',
+                discount: data.discount?.toString() || '',
+                netPrice: data.netPrice?.toString() || '',
+                gst: data.gst?.toString() || '',
+                sgst: data.sgst?.toString() || '',
+                totalPrice: data.totalPrice?.toString() || '',
+                stockQuantity: data.stockQuantity?.toString() || '',
+                quantity: data.quantity?.toString() || '1',
+                discountOnMRP: data.discountOnMRP?.toString() || '0',
+                incomingDate: data.incomingDate || '',
+                expiryDate: data.expiryDate || '',
+                supplierName: data.supplierName || '',
+                batchNumber: data.batchNumber || '',
+                manufactureDate: data.manufactureDate || '',
+                manufactureLocation: data.manufactureLocation || '',
+                productCode: data.productCode || barcode,
+                totalConvertedQty: data.secondaryUnit
+                    ? parseFloat(data.stockQuantity || 0) * parseFloat(data.conversionRate || 0)
+                    : 0,
+            }));
+        } catch (error) {
+            console.error("Error fetching product by barcode:", error.message);
+        }
+    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -225,7 +270,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="productCode"
                             value={formData.productCode}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             required
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="PRD-001"
@@ -238,7 +286,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="productName"
                             value={formData.productName}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             required
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Product name"
@@ -251,7 +302,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="category"
                             value={formData.category}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             onFocus={handleCategoryInputFocus}
                             required
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -279,7 +333,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="brand"
                             value={formData.brand}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Brand"
                         />
@@ -291,7 +348,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="date"
                             name="incomingDate"
                             value={formData.incomingDate}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -313,7 +373,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 type="number"
                                 name="mrp"
                                 value={formData.mrp}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e); // your original logic
+                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                }}
                                 step="0.01"
                                 min="0"
                                 required
@@ -330,7 +393,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 type="number"
                                 name="discount"
                                 value={formData.discount}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e); // your original logic
+                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                }}
                                 step="0.1"
                                 min="0"
                                 max="100"
@@ -350,7 +416,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 type="number"
                                 name="gst"
                                 value={formData.gst}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e); // your original logic
+                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                }}
                                 step="0.1"
                                 min="0"
                                 max="100"
@@ -370,7 +439,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 type="number"
                                 name="sgst"
                                 value={formData.sgst}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e); // your original logic
+                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                }}
                                 step="0.1"
                                 min="0"
                                 max="100"
@@ -429,7 +501,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="supplierName"
                             value={formData.supplierName}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Supplier name"
                         />
@@ -441,7 +516,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="batchNumber"
                             value={formData.batchNumber}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Batch number"
                         />
@@ -453,7 +531,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="date"
                             name="manufactureDate"
                             value={formData.manufactureDate}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -464,7 +545,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="date"
                             name="expiryDate"
                             value={formData.expiryDate}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -475,7 +559,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="text"
                             name="manufactureLocation"
                             value={formData.manufactureLocation}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Location"
                         />
@@ -495,7 +582,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         <select
                             name="baseUnit"
                             value={formData.baseUnit}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                             {unitTypes.map((unit) => (
@@ -512,7 +602,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         <select
                             name="secondaryUnit"
                             value={formData.secondaryUnit}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="">None</option>
@@ -536,7 +629,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                     type="number"
                                     name="conversionRate"
                                     value={formData.conversionRate}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        handleChange(e); // your original logic
+                                        handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                    }}
                                     min="0"
                                     step="0.01"
                                     className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -553,7 +649,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             type="number"
                             name="stockQuantity"
                             value={formData.stockQuantity}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                handleChange(e); // your original logic
+                                handleBarcodeSearch(e.target.value); // fetch data by barcode
+                            }}
                             min="0"
                             required
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -601,5 +700,4 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         </form>
     );
 };
-
 export default ProductForm;

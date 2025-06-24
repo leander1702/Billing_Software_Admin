@@ -1,63 +1,60 @@
-// src/components/Admin/StockDashboard.jsx
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 
 const StockDashboard = () => {
-  const [stockData, setStockData] = useState([]);
+  const [stockSummary, setStockSummary] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-const fetchStock = async () => {
-  try {
-    const res = await axios.get('/api/stock'); // ✅ Await here
-    console.log('Stock Data:', res.data);
-    setStockData(res.data);
-  } catch (err) {
-    console.error('Failed to fetch stock data:', err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
 
   useEffect(() => {
-    fetchStock();
+    const fetchStockSummary = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/stock-summary');
+        const data = await res.json();
+        setStockSummary(data);
+      } catch (err) {
+        console.error('Failed to load stock summary:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStockSummary();
   }, []);
 
+  if (loading) return <div className="p-6 text-lg">Loading stock summary...</div>;
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">📦 Stock Overview</h2>
-      {loading ? (
-        <p>Loading stock data...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border border-gray-200">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-3 py-2 border">Product Code</th>
-                <th className="px-3 py-2 border">Product Name</th>
-                <th className="px-3 py-2 border">Total Quantity</th>
-                <th className="px-3 py-2 border text-green-600">Available</th>
-                <th className="px-3 py-2 border text-blue-600">Sold</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stockData.map((item) => (
-                <tr key={item.productCode} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 border">{item.productCode}</td>
-                  <td className="px-3 py-2 border">{item.productName}</td>
-                  <td className="px-3 py-2 border">{item.totalQuantity}</td>
-                  <td className="px-3 py-2 border text-green-600">{item.availableQuantity}</td>
-                  <td className="px-3 py-2 border text-blue-600">{item.sellingQuantity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {stockData.length === 0 && (
-            <p className="text-sm text-gray-500 mt-2">No stock data found.</p>
-          )}
-        </div>
-      )}
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">📦 Stock Summary</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+        {stockSummary.map((item, index) => (
+          <div
+            key={index}
+            className={`border rounded-lg p-4 shadow hover:shadow-md transition duration-300
+              ${item.remaining <= 2 ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'}
+            `}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold">{item.productName}</h3>
+                <p className="text-sm text-gray-500">Category: {item.category}</p>
+              </div>
+              <div className="text-right space-y-1 text-sm">
+                <p>Total Uploaded: {item.totalUploaded}</p>
+                <p>Sold: {item.totalSold}</p>
+                <p className={`font-bold ${item.remaining <= 2 ? 'text-red-600' : 'text-green-700'}`}>
+                  Remaining: {item.remaining}
+                </p>
+              </div>
+            </div>
+
+            {item.remaining <= 2 && (
+              <p className="text-red-600 mt-2 text-sm font-medium">⚠️ Low stock</p>
+            )}
+            {item.totalSold >= 5 && (
+              <p className="text-blue-600 mt-1 text-sm font-medium">🔥 High sales product</p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

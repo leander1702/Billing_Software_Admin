@@ -18,6 +18,7 @@
     "electron": "^36.3.2",
     "formik": "^2.4.6",
     "framer-motion": "^12.18.1",
+    "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.514.0",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",

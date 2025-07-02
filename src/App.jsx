@@ -13,6 +13,8 @@ import StockDashboard from './Component/Pages/StockDashboard';
 import AdminProfile from './Component/Pages/AdminProfile';
 import UserManagement from './Component/Pages/UserManagement';
 import TopNavbar from './Component/TopNavbar';
+import BillingInvoices from './Component/Pages/BillingInvoices';
+import { ToastContainer } from 'react-toastify';
 
 const MainLayout = ({ activePage, setActivePage }) => (
   <div className="flex flex-col h-screen overflow-hidden">
@@ -22,6 +24,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
       <main className="flex-1 overflow-y-auto p-4">
         {activePage === 'Dashboard' && <Dashboard />}
         {activePage === 'Products' && <Products />}
+        {activePage === 'Billing / Invoices' && <BillingInvoices />}
         {activePage === 'Customers' && <Customers />}
         {activePage === 'Product Stock List' && <ProductStockList />}
         {activePage === 'Stock Summary' && <StockDashboard />}
@@ -43,7 +46,11 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route
           path="/admin"
-          element={<MainLayout activePage={activePage} setActivePage={setActivePage} />} />
+          element={<>
+            <MainLayout activePage={activePage} setActivePage={setActivePage} />
+            <ToastContainer />
+          </>}
+        />
       </Routes>
     </Router>
   );

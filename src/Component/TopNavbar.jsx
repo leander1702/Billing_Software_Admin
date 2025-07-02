@@ -44,7 +44,7 @@ const TopNavbar = ({ setActivePage }) => {
   }, []);
 
   return (
-    <header className="bg-gradient-to-br from-blue-50 to-indigo-100  border-blue-200  flex items-center justify-between px-6 py-1">
+    <header className="bg-gradient-to-br from-blue-100 to-indigo-100  border-blue-200  flex items-center justify-between px-6 py-1">
       {/* Left: Logo + Company Name */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm">

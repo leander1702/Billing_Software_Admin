@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+
 function CredentialForm({
   showAdminModal: externalShowAdmin = false,
   showUserModal: externalShowUser = false,
-  onCloseAdmin: externalCloseAdmin = () => { },
-  onCloseUser: externalCloseUser = () => { }
+  onCloseAdmin: externalCloseAdmin = () => {},
+  onCloseUser: externalCloseUser = () => {},
 }) {
   const [internalShowAdmin, setInternalShowAdmin] = useState(false);
   const [internalShowUser, setInternalShowUser] = useState(false);
@@ -20,7 +22,7 @@ function CredentialForm({
     password: '',
     confirmPassword: '',
     showPassword: false,
-    showConfirmPassword: false
+    showConfirmPassword: false,
   });
 
   const [userData, setUserData] = useState({
@@ -31,58 +33,54 @@ function CredentialForm({
     password: '',
     confirmPassword: '',
     showPassword: false,
-    showConfirmPassword: false
+    showConfirmPassword: false,
   });
 
   const togglePasswordVisibility = (field, isAdmin) => {
     if (isAdmin) {
-      setAdminData(prev => ({ ...prev, [field]: !prev[field] }));
+      setAdminData((prev) => ({ ...prev, [field]: !prev[field] }));
     } else {
-      setUserData(prev => ({ ...prev, [field]: !prev[field] }));
+      setUserData((prev) => ({ ...prev, [field]: !prev[field] }));
     }
   };
-
 
   const handleAdminSubmit = async (e) => {
     e.preventDefault();
     if (adminData.password !== adminData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
     try {
-   const response = await axios.post("http://localhost:5000/api/credentials/admin", adminData);
-
-      alert(response.data.message);
+      const response = await axios.post('http://localhost:5000/api/credentials/admin', adminData);
+      toast.success(response.data.message);
       resetAdminForm();
       handleCloseAdmin();
-      console.log(response.data)
+      console.log(response.data);
     } catch (error) {
-      alert(error.response?.data?.message || "Error saving admin");
-      console.log(error)
+      toast.error(error.response?.data?.message || 'Error saving admin');
+      console.log(error);
     }
   };
 
   const handleUserSubmit = async (e) => {
     e.preventDefault();
     if (userData.password !== userData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/credentials/users", userData);
-      alert(response.data.message);
-      console.log(response.data);
+      const response = await axios.post('http://localhost:5000/api/credentials/users', userData);
+      toast.success(response.data.message);
       resetUserForm();
       handleCloseUser();
+      console.log(response.data);
     } catch (error) {
-      alert(error.response?.data?.message || "Error saving user");
-        console.log(error)
+      toast.error(error.response?.data?.message || 'Error saving user');
+      console.log(error);
     }
   };
-
-
 
   const resetAdminForm = () => {
     setAdminData({
@@ -91,7 +89,7 @@ function CredentialForm({
       password: '',
       confirmPassword: '',
       showPassword: false,
-      showConfirmPassword: false
+      showConfirmPassword: false,
     });
   };
 
@@ -104,7 +102,7 @@ function CredentialForm({
       password: '',
       confirmPassword: '',
       showPassword: false,
-      showConfirmPassword: false
+      showConfirmPassword: false,
     });
   };
 
@@ -144,35 +142,33 @@ function CredentialForm({
               <>
                 <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login</h2>
                 <form onSubmit={handleAdminSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { id: 'adminUsername', label: 'Username', type: 'text', value: adminData.username, onChange: e => setAdminData({ ...adminData, username: e.target.value }) },
-                    { id: 'adminContact', label: 'Contact Number', type: 'tel', value: adminData.contactNumber, onChange: e => setAdminData({ ...adminData, contactNumber: e.target.value }) },
-                  ].map(({ id, label, type, value, onChange }) => (
+                  {[{ id: 'adminUsername', label: 'Username', value: adminData.username, field: 'username' },
+                    { id: 'adminContact', label: 'Contact Number', value: adminData.contactNumber, field: 'contactNumber' }
+                  ].map(({ id, label, value, field }) => (
                     <div key={id}>
                       <label htmlFor={id} className="block text-gray-600 mb-1">{label}</label>
                       <input
-                        type={type}
+                        type="text"
                         id={id}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         value={value}
-                        onChange={onChange}
+                        onChange={(e) => setAdminData({ ...adminData, [field]: e.target.value })}
                         required
                       />
                     </div>
                   ))}
 
-                  {[
-                    { id: 'adminPassword', label: 'Password', field: 'showPassword', value: adminData.password },
-                    { id: 'adminConfirmPassword', label: 'Confirm Password', field: 'showConfirmPassword', value: adminData.confirmPassword },
-                  ].map(({ id, label, field, value }) => (
+                  {[{ id: 'adminPassword', label: 'Password', field: 'showPassword', key: 'password' },
+                    { id: 'adminConfirmPassword', label: 'Confirm Password', field: 'showConfirmPassword', key: 'confirmPassword' }
+                  ].map(({ id, label, field, key }) => (
                     <div key={id} className="relative">
                       <label htmlFor={id} className="block text-gray-600 mb-1">{label}</label>
                       <input
                         type={adminData[field] ? 'text' : 'password'}
                         id={id}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg pr-10 focus:ring-2 focus:ring-blue-500"
-                        value={value}
-                        onChange={(e) => setAdminData({ ...adminData, [id.includes('Confirm') ? 'confirmPassword' : 'password']: e.target.value })}
+                        value={adminData[key]}
+                        onChange={(e) => setAdminData({ ...adminData, [key]: e.target.value })}
                         required
                       />
                       <button
@@ -185,6 +181,7 @@ function CredentialForm({
                     </div>
                   ))}
                 </form>
+
                 <div className="flex justify-end mt-6 gap-4">
                   <button
                     onClick={handleCloseAdmin}
@@ -206,37 +203,35 @@ function CredentialForm({
               <>
                 <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">User Login</h2>
                 <form onSubmit={handleUserSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { id: 'cashierName', label: 'Cashier Name', type: 'text', value: userData.cashierName },
-                    { id: 'cashierId', label: 'Cashier ID', type: 'number', value: userData.cashierId },
-                    { id: 'counterNum', label: 'Counter Number', type: 'text', value: userData.counterNum },
-                    { id: 'contactNumber', label: 'Contact Number', type: 'tel', value: userData.contactNumber },
-                  ].map(({ id, label, type, value }) => (
+                  {[{ id: 'cashierName', label: 'Cashier Name', type: 'text' },
+                    { id: 'cashierId', label: 'Cashier ID', type: 'number' },
+                    { id: 'counterNum', label: 'Counter Number', type: 'text' },
+                    { id: 'contactNumber', label: 'Contact Number', type: 'tel' }
+                  ].map(({ id, label, type }) => (
                     <div key={id}>
                       <label htmlFor={id} className="block text-gray-600 mb-1">{label}</label>
                       <input
                         type={type}
                         id={id}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        value={value}
+                        value={userData[id]}
                         onChange={(e) => setUserData({ ...userData, [id]: e.target.value })}
                         required
                       />
                     </div>
                   ))}
 
-                  {[
-                    { id: 'userPassword', label: 'Password', field: 'showPassword', value: userData.password },
-                    { id: 'userConfirmPassword', label: 'Confirm Password', field: 'showConfirmPassword', value: userData.confirmPassword },
-                  ].map(({ id, label, field, value }) => (
+                  {[{ id: 'userPassword', label: 'Password', field: 'showPassword', key: 'password' },
+                    { id: 'userConfirmPassword', label: 'Confirm Password', field: 'showConfirmPassword', key: 'confirmPassword' }
+                  ].map(({ id, label, field, key }) => (
                     <div key={id} className="relative">
                       <label htmlFor={id} className="block text-gray-600 mb-1">{label}</label>
                       <input
                         type={userData[field] ? 'text' : 'password'}
                         id={id}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg pr-10 focus:ring-2 focus:ring-blue-500"
-                        value={value}
-                        onChange={(e) => setUserData({ ...userData, [id.includes('Confirm') ? 'confirmPassword' : 'password']: e.target.value })}
+                        value={userData[key]}
+                        onChange={(e) => setUserData({ ...userData, [key]: e.target.value })}
                         required
                       />
                       <button
@@ -249,6 +244,7 @@ function CredentialForm({
                     </div>
                   ))}
                 </form>
+
                 <div className="flex justify-end mt-6 gap-4">
                   <button
                     onClick={handleCloseUser}
@@ -271,4 +267,5 @@ function CredentialForm({
     </div>
   );
 }
+
 export default CredentialForm;

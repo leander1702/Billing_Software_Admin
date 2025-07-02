@@ -12,38 +12,38 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  if (!phoneNumber || !password) {
-    setError('Please enter both phone number and password.');
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    const res = await axios.get("http://localhost:5000/api/credentials/admin");
-
-    const adminData = res.data; // Single admin object
-
-    if (
-      adminData.contactNumber === phoneNumber &&
-      adminData.password === password
-    ) {
-      console.log("Login success", adminData);
-      navigate("/admin");
-    } else {
-      setError("Invalid phone number or password");
+    if (!phoneNumber || !password) {
+      setError('Please enter both phone number and password.');
+      setIsLoading(false);
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    setError("Login failed. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    try {
+      const res = await axios.get("http://localhost:5000/api/credentials/admin");
+
+      const adminData = res.data; // Single admin object
+
+      if (
+        adminData.contactNumber === phoneNumber &&
+        adminData.password === password
+      ) {
+        console.log("Login success", adminData);
+        navigate("/admin");
+      } else {
+        setError("Invalid phone number or password");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   return (
@@ -91,10 +91,13 @@ const LoginPage = () => {
           <div className="w-full max-w-md">
             {/* Company header */}
             <div className="flex items-center justify-center lg:justify-start mb-8">
-              <img src={logo} alt="Company Logo" className="h-8 w-8" />
+              <img src={logo} alt="Company Logo" className="h-12 w-12" />
               <div className="ml-3">
-                <h2 className="text-sm font-bold text-gray-800">Billing Software</h2>
-                <p className="text-xs text-gray-500">Enterprise Edition</p>
+                <div className="relative">
+                  <h2 className="text-base font-bold text-gray-800">A D V E N T U R E</h2>
+                  <div className="absolute bottom-0 left-0 w-full h-px bg-black"></div>
+                </div>
+                <p className="text-sm text-gray-500 ">Smart  Invoice Pro</p>
               </div>
             </div>
 

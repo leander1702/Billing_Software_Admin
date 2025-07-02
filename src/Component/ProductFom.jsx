@@ -42,6 +42,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         { value: 'ml', label: 'ml' },
         { value: 'meter', label: 'm' },
         { value: 'packet', label: 'Packet' }
+        
     ];
 
     useEffect(() => {

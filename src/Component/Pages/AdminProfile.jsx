@@ -1,9 +1,10 @@
-import React,{useState} from "react";
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { toast } from 'react-toastify';
 import CredentialForm from "./CredentialForm";
-const AdminProfile = () => {  
+const AdminProfile = () => {
   const formik = useFormik({
     initialValues: {
       businessName: "",
@@ -64,11 +65,11 @@ const AdminProfile = () => {
         });
 
         console.log("Company registered:", response.data);
-        alert("Company registered successfully!");
+        toast.success("Company registered successfully!");
         resetForm(); // Optional: reset the form
       } catch (error) {
         console.error("Registration error:", error.response?.data || error.message);
-        alert("Registration failed!");
+        toast.error("Registration failed!");
       }
     },
   });
@@ -80,7 +81,7 @@ const AdminProfile = () => {
       <h1 className="text-xl font-semibold text-gray-900 text-start">Edit Profile</h1>
       <div className="flex justify-between items-center mb-4"> {/* Added items-center for vertical alignment */}
         <div>
-         <button
+          <button
             type="button"
             onClick={() => setShowAdminModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md"
@@ -95,11 +96,11 @@ const AdminProfile = () => {
             User Credentials
           </button>
         </div>
-        <CredentialForm 
-        showAdminModal={showAdminModal}
-        showUserModal={showUserModal}
-        onCloseAdmin={() => setShowAdminModal(false)}
-        onCloseUser={() => setShowUserModal(false)}/>
+        <CredentialForm
+          showAdminModal={showAdminModal}
+          showUserModal={showUserModal}
+          onCloseAdmin={() => setShowAdminModal(false)}
+          onCloseUser={() => setShowUserModal(false)} />
         {/* Logo Upload Section */}
         <div className="relative group mr-10">
           <div className="w-32 h-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shadow-inner">
@@ -258,6 +259,7 @@ const AdminProfile = () => {
                   <option value="Books & Stationery">Books & Stationery</option>
                   <option value="Grocery & Essentials">Grocery & Essentials</option>
                   <option value="Sports & Fitness">Sports & Fitness</option>
+                  <option value="Stationery">Stationery</option>               
                   <option value="Jewelry & Accessories">Jewelry & Accessories</option>
                   <option value="Toys & Baby Products">Toys & Baby Products</option>
                   <option value="Pharmacy & Medical">Pharmacy & Medical</option>
@@ -268,7 +270,8 @@ const AdminProfile = () => {
                   <option value="Services">Services</option>
                   <option value="Footwears">Footwears</option>
                   <option value="Leather Products">Leather Products</option>
-                  <option value="others">Others</option>
+                  <option value="others">Agriculture / Farming Supplies</option>
+                    <option value="others">Others</option>
                 </select>
               </div>
 

@@ -66,7 +66,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
   };
 
   return (
-    <aside className={`relative flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
+    <aside className={`relative flex flex-col bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-200 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
       
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto mt-2">

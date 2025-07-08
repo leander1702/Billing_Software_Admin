@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X } from 'lucide-react'; // Import X icon for the modal close button
+import { X, Search } from 'lucide-react'; // Import X icon for the modal close button
 
 // Product Details Modal Component (reused and slightly adapted)
 const ProductDetailsModal = ({ selectedBill, onClose }) => {
@@ -104,6 +104,8 @@ const BillingInvoices = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // New state for search term
+  const [filteredBills, setFilteredBills] = useState([]); // New state for filtered bills
 
   useEffect(() => {
     // Fetch bills data from the API
@@ -116,6 +118,7 @@ const BillingInvoices = () => {
       })
       .then(data => {
         setBills(data);
+        setFilteredBills(data); // Initialize filtered bills with all bills
         setIsLoading(false);
       })
       .catch(err => {
@@ -123,6 +126,25 @@ const BillingInvoices = () => {
         setIsLoading(false);
       });
   }, []);
+
+  // Effect to filter bills whenever searchTerm or bills change
+  useEffect(() => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const currentFilteredBills = bills.filter(bill => {
+      const customerName = bill.customer.name ? bill.customer.name.toLowerCase() : '';
+      const customerId = bill.customer.id ? bill.customer.id.toLowerCase() : '';
+      const customerContact = bill.customer.contact ? bill.customer.contact.toLowerCase() : '';
+      const billIdLastSix = bill._id ? bill._id.substring(bill._id.length - 6).toLowerCase() : '';
+
+      return (
+        customerName.includes(lowerCaseSearchTerm) ||
+        customerId.includes(lowerCaseSearchTerm) ||
+        customerContact.includes(lowerCaseSearchTerm) ||
+        billIdLastSix.includes(lowerCaseSearchTerm)
+      );
+    });
+    setFilteredBills(currentFilteredBills);
+  }, [searchTerm, bills]);
 
   // Function to open the product details modal
   const openProductDetails = (bill) => {
@@ -139,25 +161,55 @@ const BillingInvoices = () => {
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-900">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
+          {/* Heading */}
           <h2 className="text-3xl font-bold text-gray-800">Customer Bills</h2>
-          <div className="text-base text-gray-600">
-            {bills.length} {bills.length === 1 ? 'record' : 'records'} found
+
+          {/* Search Input + Record Count */}
+          <div className="flex flex-col space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-72">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-sm"
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Record Count */}
+            <div className="text-sm text-gray-600 pl-1 sm:pl-0">
+              {filteredBills.length} {filteredBills.length === 1 ? 'Bill' : 'Bills'} 
+            </div>
           </div>
         </div>
+
+
+
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
             <p className="ml-4 text-lg text-gray-600">Loading customer bills...</p>
           </div>
-        ) : bills.length === 0 ? (
+        ) : filteredBills.length === 0 && !searchTerm ? (
           <div className="bg-white rounded-xl shadow-md p-8 text-center border border-gray-200">
             <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="mt-4 text-xl font-medium text-gray-900">No customer records found</h3>
             <p className="mt-2 text-gray-500">It looks like no customer bills have been created yet. Start by adding new sales!</p>
+          </div>
+        ) : filteredBills.length === 0 && searchTerm ? (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center border border-gray-200">
+            <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-4 text-xl font-medium text-gray-900">No matching bills found</h3>
+            <p className="mt-2 text-gray-500">Try adjusting your search term.</p>
           </div>
         ) : (
           <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
@@ -190,7 +242,7 @@ const BillingInvoices = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {bills.map((bill) => (
+                  {filteredBills.map((bill) => (
                     <tr key={bill._id} className="hover:bg-gray-50"> {/* Changed key to bill._id */}
                       {/* Bill ID data cell */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

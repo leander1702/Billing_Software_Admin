@@ -13,6 +13,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         mrp: '',
         discount: '',
         netPrice: '',
+        gstCategory: 'GST',
         gst: '',
         sgst: '',
         totalPrice: '',
@@ -41,8 +42,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         { value: 'liter', label: 'L' },
         { value: 'ml', label: 'ml' },
         { value: 'meter', label: 'm' },
-        { value: 'packet', label: 'Packet' }
-        
+        { value: 'packet', label: 'Packet' },
+        { value: 'Bag', label: 'Bag' },
+        { value: 'Bottle', label: 'Bottle' }
+
     ];
 
     useEffect(() => {
@@ -66,7 +69,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 discountOnMRP: product.discountOnMRP?.toString() || '0',
                 incomingDate: product.incomingDate || '',
                 expiryDate: product.expiryDate || '',
-                // New fields for Product Source Information
+                gstCategory: product.gstCategory || 'GST',
                 supplierName: product.supplierName || '',
                 batchNumber: product.batchNumber || '',
                 manufactureDate: product.manufactureDate || '',
@@ -359,11 +362,14 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 </div>
             </div>
             {/* Pricing Section - Compact */}
+            {/* Pricing Section - Compact */}
             <div className="bg-white shadow rounded-lg p-4">
                 <h3 className="text-md font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
                     Pricing Information
                 </h3>
+
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    {/* MRP */}
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">MRP (₹)*</label>
                         <div className="relative">
@@ -375,8 +381,8 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 name="mrp"
                                 value={formData.mrp}
                                 onChange={(e) => {
-                                    handleChange(e); // your original logic
-                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                    handleChange(e);
+                                    handleBarcodeSearch(e.target.value);
                                 }}
                                 step="0.01"
                                 min="0"
@@ -387,6 +393,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </div>
                     </div>
 
+                    {/* Discount */}
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
                         <div className="relative">
@@ -395,8 +402,8 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 name="discount"
                                 value={formData.discount}
                                 onChange={(e) => {
-                                    handleChange(e); // your original logic
-                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
+                                    handleChange(e);
+                                    handleBarcodeSearch(e.target.value);
                                 }}
                                 step="0.1"
                                 min="0"
@@ -410,52 +417,72 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </div>
                     </div>
 
+                    {/* GST Category Dropdown (Aligned Right) */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">GST (%)</label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                name="gst"
-                                value={formData.gst}
-                                onChange={(e) => {
-                                    handleChange(e); // your original logic
-                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
-                                }}
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                className="w-full pr-7 pl-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                placeholder="0.0"
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                                <span className="text-gray-500 text-sm">%</span>
-                            </div>
-                        </div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">GST Category*</label>
+                        <select
+                            name="gstCategory"
+                            value={formData.gstCategory}
+                            onChange={handleChange}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="GST">GST</option>
+                            <option value="Non-GST">Non-GST</option>
+                        </select>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">SGST (%)</label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                name="sgst"
-                                value={formData.sgst}
-                                onChange={(e) => {
-                                    handleChange(e); // your original logic
-                                    handleBarcodeSearch(e.target.value); // fetch data by barcode
-                                }}
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                className="w-full pr-7 pl-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                placeholder="0.0"
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                                <span className="text-gray-500 text-sm">%</span>
+                    {/* GST + SGST (conditionally rendered) */}
+                    {formData.gstCategory === 'GST' && (
+                        <>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">GST (%)</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        name="gst"
+                                        value={formData.gst}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                            handleBarcodeSearch(e.target.value);
+                                        }}
+                                        step="0.1"
+                                        min="0"
+                                        max="100"
+                                        className="w-full pr-7 pl-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        placeholder="0.0"
+                                    />
+                                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                        <span className="text-gray-500 text-sm">%</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">SGST (%)</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        name="sgst"
+                                        value={formData.sgst}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                            handleBarcodeSearch(e.target.value);
+                                        }}
+                                        step="0.1"
+                                        min="0"
+                                        max="100"
+                                        className="w-full pr-7 pl-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        placeholder="0.0"
+                                    />
+                                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                        <span className="text-gray-500 text-sm">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Net Price */}
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Net Price (₹)</label>
                         <div className="relative">
@@ -472,6 +499,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </div>
                     </div>
 
+                    {/* Total Price */}
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Total Price (₹)</label>
                         <div className="relative">
@@ -489,6 +517,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     </div>
                 </div>
             </div>
+
 
             {/* Product Source Information Section */}
             <div className="bg-white shadow rounded-lg p-4">

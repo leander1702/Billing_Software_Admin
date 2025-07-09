@@ -52,9 +52,6 @@ const TopNavbar = ({ setActivePage }) => {
             src={`http://localhost:5000${company.logoUrl}`}
             alt="Logo"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/150';
-            }}
           />
         </div>
         <h1 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">

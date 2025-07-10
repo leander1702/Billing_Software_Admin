@@ -1,77 +1,198 @@
 import React, { useEffect, useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, Printer } from 'lucide-react';
 
-// Customer Purchase History Modal Component
 const CustomerHistoryModal = ({ customer, onClose }) => {
   if (!customer) return null;
 
+  // Calculate total payment amount
+  const totalPaymentAmount = customer.bills.reduce((sum, bill) => sum + bill.total, 0);
+
+  // Function to handle printing
+  const handlePrint = () => {
+    const printContent = document.getElementById('printable-customer-info').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+      <div class="print-container" style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #4f46e5; margin-bottom: 5px;">${customer.name}'s Purchase History</h1>
+          <p style="color: #6b7280; margin-top: 0;">Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+        ${printContent}
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #6b7280;">
+          Thank you for your business!
+        </div>
+      </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    window.location.reload();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Purchase History for {customer.name}</h3>
+              <h3 className="text-lg font-medium text-gray-900">Customer Details: {customer.name}</h3>
               <p className="text-sm text-gray-500 mt-1">Customer ID: {customer.id}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <X className="h-6 w-6" />
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handlePrint}
+                className="text-gray-600 hover:text-blue-600 p-1 rounded-md"
+                title="Print"
+              >
+                <Printer className="h-5 w-5" />
+              </button>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500 p-1 rounded-md"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
-          <div className="mt-6">
-            <h4 className="text-sm font-medium text-gray-500 mb-2">Orders ({customer.bills.length})</h4>
-            {customer.bills.length === 0 ? (
-              <p className="text-sm text-gray-500">No purchases found for this customer.</p>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill ID</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {customer.bills.map((bill) => (
-                      <tr key={bill._id}>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {bill._id.substring(bill._id.length - 6)}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(bill.date).toLocaleString('en-IN', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                          })}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          <ul className="list-disc list-inside">
-                            {bill.products.map((product, pIdx) => (
-                              <li key={pIdx}>{product.name} (x{product.quantity})</li>
-                            ))}
-                          </ul>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                          ₹ {bill.total.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <div id="printable-customer-info" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Customer Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">CUSTOMER INFORMATION</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Full Name:</span>
+                    <span className="text-sm font-medium text-gray-900">{customer.name || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Contact Number:</span>
+                    <span className="text-sm font-medium text-gray-900">{customer.contact || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Aadhar ID:</span>
+                    <span className="text-sm font-medium text-gray-900">{customer.aadhar || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Location:</span>
+                    <span className="text-sm font-medium text-gray-900">{customer.location || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Customer Since:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {customer.bills.length > 0 
+                        ? new Date(customer.bills[0].date).toLocaleDateString() 
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Purchase Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">PURCHASE SUMMARY</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Total Bills:</span>
+                    <span className="text-sm font-medium text-gray-900">{customer.bills.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Total Amount Spent:</span>
+                    <span className="text-sm font-medium text-gray-900">₹ {totalPaymentAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Average Bill Value:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      ₹ {customer.bills.length > 0 ? (totalPaymentAmount / customer.bills.length).toFixed(2) : '0.00'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Last Purchase:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {customer.bills.length > 0 
+                        ? new Date(
+                            customer.bills.reduce((latest, bill) => 
+                              new Date(bill.date) > new Date(latest) ? bill.date : latest, 
+                            customer.bills[0].date)
+                          ).toLocaleDateString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchase History */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">PURCHASE HISTORY ({customer.bills.length})</h4>
+              {customer.bills.length === 0 ? (
+                <p className="text-sm text-gray-500">No purchases found for this customer.</p>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill ID</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Changes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {customer.bills.map((bill) => (
+                        <tr key={bill._id}>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {bill._id.substring(bill._id.length - 6)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(bill.date).toLocaleString('en-IN', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">
+                            <ul className="list-disc list-inside">
+                              {bill.products.map((product, pIdx) => (
+                                <li key={pIdx}>
+                                  {product.name} (x{product.quantity}) 
+                                  {product.price && <span className="text-gray-400 ml-1">@ ₹{product.price.toFixed(2)}</span>}
+                                </li>
+                              ))}
+                            </ul>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
+                            ₹ {bill.subtotal?.toFixed(2) || bill.products.reduce((sum, p) => sum + (p.price * p.quantity), 0).toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            ₹ {bill.total.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
+                            {bill.changes || '0.00'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </button>
             <button
               onClick={onClose}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -85,9 +206,6 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
   );
 };
 
-
-
-
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,80 +213,143 @@ const Customers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch bills data from the API
-    fetch('http://localhost:5000/api/bills')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Try to fetch customers first
+        let customersResponse;
+        try {
+          customersResponse = await fetch('http://localhost:5000/api/customers');
+          if (!customersResponse.ok) {
+            throw new Error(`Customers API returned ${customersResponse.status}`);
+          }
+        } catch (customersError) {
+          console.warn('Failed to fetch customers directly:', customersError.message);
+          customersResponse = null;
         }
-        return res.json();
-      })
-      .then(data => {
-        // Process bills to get unique customers and their purchase history
+
+        // Then fetch bills
+        const billsResponse = await fetch('http://localhost:5000/api/bills');
+        if (!billsResponse.ok) {
+          throw new Error(`Bills API returned ${billsResponse.status}`);
+        }
+        const billsData = await billsResponse.json();
+
+        // Process data
         const customerMap = new Map();
-        data.forEach(bill => {
-          const customerId = bill.customer.id;
-          if (!customerMap.has(customerId)) {
-            customerMap.set(customerId, {
-              id: customerId,
-              name: bill.customer.name,
-              contact: bill.customer.contact,
-              bills: [],
+
+        // Add customers from customers API if available
+        if (customersResponse) {
+          const customersData = await customersResponse.json();
+          customersData.forEach(customer => {
+            customerMap.set(customer._id, {
+              id: customer._id,
+              name: customer.name,
+              contact: customer.contact,
+              aadhar: customer.aadhar || 'N/A',
+              location: customer.location || 'N/A',
+              bills: []
+            });
+          });
+        }
+
+        // Process bills and add any missing customers
+        billsData.forEach(bill => {
+          if (bill.customer) {
+            const customerId = bill.customer._id || bill.customer.id;
+            const customerName = bill.customer.name || 'Unknown Customer';
+            const customerContact = bill.customer.contact || 'No contact';
+            const customerAadhar = bill.customer.aadhar || 'N/A';
+            const customerLocation = bill.customer.location || 'N/A';
+
+            if (!customerMap.has(customerId)) {
+              customerMap.set(customerId, {
+                id: customerId,
+                name: customerName,
+                contact: customerContact,
+                aadhar: customerAadhar,
+                location: customerLocation,
+                bills: []
+              });
+            }
+
+            // Add bill to customer
+            customerMap.get(customerId).bills.push({
+              ...bill,
+              changes: bill.changes || '0.00'
             });
           }
-          customerMap.get(customerId).bills.push(bill);
         });
 
         const uniqueCustomers = Array.from(customerMap.values());
         setCustomers(uniqueCustomers);
         setFilteredCustomers(uniqueCustomers);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
+      } finally {
         setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching bills for customers:', err);
-        setIsLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Effect to filter customers whenever searchTerm or customers change
   useEffect(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    const currentFilteredCustomers = customers.filter(customer => {
-      const customerName = customer.name ? customer.name.toLowerCase() : '';
-      const customerId = customer.id ? customer.id.toLowerCase() : '';
-      const customerContact = customer.contact ? customer.contact.toLowerCase() : '';
-
-      return (
-        customerName.includes(lowerCaseSearchTerm) ||
-        customerId.includes(lowerCaseSearchTerm) ||
-        customerContact.includes(lowerCaseSearchTerm)
-      );
+    const filtered = customers.filter(customer => {
+      const nameMatch = customer.name?.toLowerCase().includes(lowerCaseSearchTerm);
+      const idMatch = customer.id?.toLowerCase().includes(lowerCaseSearchTerm);
+      const contactMatch = customer.contact?.toLowerCase().includes(lowerCaseSearchTerm);
+      const aadharMatch = customer.aadhar?.toLowerCase().includes(lowerCaseSearchTerm);
+      return nameMatch || idMatch || contactMatch || aadharMatch;
     });
-    setFilteredCustomers(currentFilteredCustomers);
+    setFilteredCustomers(filtered);
   }, [searchTerm, customers]);
 
-  // Function to open the customer purchase history modal
   const openCustomerHistory = (customer) => {
     setSelectedCustomer(customer);
     setIsModalOpen(true);
   };
 
-  // Function to close the modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedCustomer(null);
   };
 
+  if (error) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-900">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-md p-8 text-center border border-gray-200">
+            <svg className="mx-auto h-16 w-16 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-4 text-xl font-medium text-gray-900">Error Loading Data</h3>
+            <p className="mt-2 text-gray-500">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-900">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
-          {/* Heading */}
           <h2 className="text-3xl font-bold text-gray-800">Customers</h2>
 
-          {/* Search Input + Record Count */}
           <div className="flex flex-col space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-72">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,7 +364,6 @@ const Customers = () => {
               />
             </div>
 
-            {/* Record Count */}
             <div className="text-sm text-gray-600 pl-1 sm:pl-0">
               {filteredCustomers.length} {filteredCustomers.length === 1 ? 'customer' : 'customers'} 
             </div>
@@ -244,6 +424,7 @@ const Customers = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                            <div className="text-xs text-gray-500">{customer.location}</div>
                           </div>
                         </div>
                       </td>
@@ -272,7 +453,6 @@ const Customers = () => {
           </div>
         )}
 
-        {/* Customer Purchase History Modal */}
         {isModalOpen && (
           <CustomerHistoryModal
             customer={selectedCustomer}

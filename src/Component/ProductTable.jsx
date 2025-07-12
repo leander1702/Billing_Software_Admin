@@ -61,8 +61,8 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex flex-col">
-                   {product.secondaryUnit && (
-                      <span className="text-xs text-gray-400">1{product.secondaryUnit}</span>
+                   {product.baseUnit && (
+                      <span className="text-xs text-gray-400">1{product.baseUnit}</span>
                     )}
                   </div>
                 </td>

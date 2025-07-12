@@ -436,7 +436,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">MRP (₹)*</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Sales Price (₹)*</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                                 <span className="text-gray-500 text-sm">₹</span>
@@ -452,17 +452,6 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 className="w-full pl-7 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 placeholder="0.00"
                             />
-                            {!useManualPrice && (
-                                <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
-                                    {/* <button
-                                        type="button"
-                                        onClick={() => setUseManualPrice(true)}
-                                        className="text-xs text-blue-600 hover:text-blue-800"
-                                    >
-                                        Custom
-                                    </button> */}
-                                </div>
-                            )}
                         </div>
                         {!useManualPrice && (
                             <p className="text-xs text-gray-500 mt-1">

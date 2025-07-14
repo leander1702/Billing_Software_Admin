@@ -28,7 +28,6 @@ const StockDashboard = () => {
     
     let matchesTime = true;
     if (timeFilter === 'recent') {
-      // Assuming each item has a lastUploaded date
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       matchesTime = new Date(item.lastUploaded) > oneWeekAgo;
@@ -37,8 +36,23 @@ const StockDashboard = () => {
     return matchesSearch && matchesTime;
   });
 
-  const criticalStock = filteredStock.filter(item => item.remaining <= 2);
-  const trendingStock = filteredStock.filter(item => item.totalSold >= 5);
+  // Function to format quantity with proper units
+  const formatQuantity = (item, quantity, showSecondary = true) => {
+    if (item.baseUnit === 'bag' && item.secondaryUnit === 'kg' && showSecondary) {
+      const fullBags = Math.floor(quantity);
+      const remainingKg = (quantity - fullBags) * item.conversionRate;
+      
+      let result = `${fullBags} ${item.baseUnit}`;
+      if (remainingKg > 0) {
+        result += ` + ${remainingKg.toFixed(2)} ${item.secondaryUnit}`;
+      }
+      return result;
+    }
+    return `${quantity.toFixed(2)} ${item.baseUnit}`;
+  };
+
+  const criticalStock = filteredStock.filter(item => item.currentStock <= 2);
+  const trendingStock = filteredStock.filter(item => item.totalSoldOverall >= 5);
 
   if (loading) {
     return (
@@ -86,7 +100,7 @@ const StockDashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
           <div className="flex justify-between items-start">
             <div>
@@ -122,7 +136,7 @@ const StockDashboard = () => {
             </div>
           </div>
         </div>
-      </div> */}
+      </div>
 
       {/* Stock List */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -153,19 +167,19 @@ const StockDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-500">Stock Level</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.remaining <= 2 ? 'bg-red-100 text-red-800' : 
-                        item.remaining <= 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                        item.currentStock <= 2 ? 'bg-red-100 text-red-800' : 
+                        item.currentStock <= 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
                       }`}>
-                        {item.remaining <= 2 ? 'Low' : item.remaining <= 10 ? 'Low' : 'High'}
+                        {item.currentStock <= 2 ? 'Low' : item.currentStock <= 10 ? 'Medium' : 'High'}
                       </span>
                     </div>
                     <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
                       <div 
                         className={`h-2.5 rounded-full ${
-                          item.remaining <= 2 ? 'bg-red-500' : 
-                          item.remaining <= 10 ? 'bg-yellow-500' : 'bg-green-500'
+                          item.currentStock <= 2 ? 'bg-red-500' : 
+                          item.currentStock <= 10 ? 'bg-yellow-500' : 'bg-green-500'
                         }`} 
-                        style={{ width: `${Math.min(100, (item.remaining / item.totalUploaded) * 100)}%` }}
+                        style={{ width: `${Math.min(100, (item.currentStock / item.initialStock) * 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -174,18 +188,18 @@ const StockDashboard = () => {
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
                         <p className="text-sm text-gray-500">Uploaded</p>
-                        <p className="font-medium">{item.totalUploaded}</p>
+                        <p className="font-medium">{formatQuantity(item, item.initialStock)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Sold</p>
-                        <p className="font-medium text-blue-600">{item.totalSold}</p>
+                        <p className="font-medium text-blue-600">{formatQuantity(item, item.totalSold)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Remaining</p>
                         <p className={`font-medium ${
-                          item.remaining <= 2 ? 'text-red-600' : 'text-gray-900'
+                          item.currentStock <= 2 ? 'text-red-600' : 'text-gray-900'
                         }`}>
-                          {item.remaining}
+                          {formatQuantity(item, item.currentStock)}
                         </p>
                       </div>
                     </div>

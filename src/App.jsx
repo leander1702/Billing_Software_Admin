@@ -15,6 +15,7 @@ import UserManagement from './Component/Pages/UserManagement';
 import TopNavbar from './Component/TopNavbar';
 import BillingInvoices from './Component/Pages/BillingInvoices';
 import { ToastContainer } from 'react-toastify';
+import ProfitReport from './Component/Pages/ProfitReport';
 
 
 const MainLayout = ({ activePage, setActivePage }) => (
@@ -30,6 +31,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'Customers' && <Customers />}
         {activePage === 'Product Stock List' && <ProductStockList />}
         {activePage === 'Stock Summary' && <StockDashboard />}
+        {activePage === 'ProfitReport' && <ProfitReport />}
         {activePage === 'Admin Management' && <AdminProfile />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>

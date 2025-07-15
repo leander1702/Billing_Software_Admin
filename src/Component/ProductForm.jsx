@@ -10,13 +10,14 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         baseUnit: 'piece',
         secondaryUnit: '',
         conversionRate: 0,
-        mrp: '',
-        discount: '',
-        netPrice: '',
-        gst: '',
-        sgst: '',
-        totalPrice: '',
-        stockQuantity: '',
+        mrp: '0',
+        discount: '0',
+        mrpPrice: '0',
+        netPrice: '0',
+        gst:'0',
+        sgst: '0',
+        totalPrice: '0',
+        stockQuantity: '0',
         gstCategory: 'GST',
         quantity: '1',
         discountOnMRP: '0',
@@ -27,6 +28,8 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         manufactureDate: '',
         manufactureLocation: '',
         totalConvertedQty: 0,
+        sellerPrice: '0', // Add this new field
+        profit: '0',       // Add profit field
     });
 
     const [uniqueCategories, setUniqueCategories] = useState([]);
@@ -102,6 +105,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 secondaryUnit: product.secondaryUnit || '',
                 conversionRate: product.conversionRate || 0,
                 mrp: product.mrp?.toString() || '',
+                mrpPrice: product.mrpPrice?.toString() || '',
                 discount: product.discount?.toString() || '',
                 netPrice: product.netPrice?.toString() || '',
                 gst: product.gst?.toString() || '',
@@ -136,18 +140,24 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
             const updatedData = { ...prev, [name]: value };
 
             // Recalculate Net Price and Total Price
-            if (name === 'mrp' || name === 'discount' || name === 'gst' || name === 'sgst') {
+            if (name === 'mrp' || name === 'discount' || name === 'gst' || name === 'sgst'
+                || name === 'sellerPrice') {
                 const mrp = parseFloat(updatedData.mrp) || 0;
+                const sellerPrice = parseFloat(updatedData.sellerPrice) || 0;
                 const discount = parseFloat(updatedData.discount) || 0;
                 const gst = parseFloat(updatedData.gst) || 0;
                 const sgst = parseFloat(updatedData.sgst) || 0;
 
-                const netPrice = mrp - mrp * (discount / 100);
+                const netPrice = mrp - (mrp * (discount / 100));
                 const totalGSTPercentage = gst + sgst;
                 const totalPrice = netPrice + (netPrice * (totalGSTPercentage / 100));
+                const profit = totalPrice - sellerPrice;
+
 
                 updatedData.netPrice = netPrice.toFixed(2);
                 updatedData.totalPrice = totalPrice.toFixed(2);
+               updatedData.profit = profit.toFixed(2);
+               
             }
 
             // Calculate totalConvertedQty
@@ -219,6 +229,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 secondaryUnit: data.secondaryUnit || '',
                 conversionRate: data.conversionRate || 0,
                 mrp: data.mrp?.toString() || '',
+                mrpPrice: data.mrpPrice?.toString() || '',
                 discount: data.discount?.toString() || '',
                 netPrice: data.netPrice?.toString() || '',
                 gst: data.gst?.toString() || '',
@@ -261,6 +272,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         const preparedData = {
             ...formData,
             mrp: parseFloat(formData.mrp) || 0,
+            mrpPrice: parseFloat(formData.mrpPrice) || 0,
             discount: parseFloat(formData.discount) || 0,
             netPrice: parseFloat(formData.netPrice) || 0,
             gst: parseFloat(formData.gst) || 0,
@@ -296,13 +308,16 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     baseUnit: 'piece',
                     secondaryUnit: '',
                     conversionRate: 0,
-                    mrp: '',
-                    discount: '',
-                    netPrice: '',
-                    gst: '',
-                    sgst: '',
-                    totalPrice: '',
-                    stockQuantity: '',
+                    mrp: '0',
+                    mrpPrice: '0',
+                    discount: '0',
+                    netPrice: '0',
+                    gst:  '0',
+                    sgst:  '0',
+                    totalPrice:  '0',
+                    stockQuantity: '0',
+                     sellerPrice: '0',
+                       profit: '0',
                     quantity: '1',
                     discountOnMRP: '0',
                     incomingDate: '',
@@ -436,6 +451,58 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </select>
                     </div>
                     <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">MRP Price (₹)*</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                            </div>
+                            <input
+                                type="number"
+                                name="mrpPrice"
+                                value={formData.mrpPrice}
+                                onChange={handleChange}
+                                required
+                                className="w-full pl-7 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Seller Price (₹)*</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                            </div>
+                            <input
+                                type="number"
+                                name="sellerPrice"
+                                value={formData.sellerPrice}
+                                onChange={handleChange}
+                                step="0.01"
+                                min="0"
+                                required
+                                className="w-full pl-7 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Profit (₹)</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                            </div>
+                            <input
+                                type="text"
+                                name="profit"
+                                value={formData.profit}
+                                readOnly
+                                className="w-full pl-7 pr-2 py-1 text-sm bg-gray-50 border border-gray-300 rounded"
+                            />
+                        </div>
+                    </div>
+                    <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Sales Price (₹)*</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
@@ -545,7 +612,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </>
                     )}
 
-                    <div>
+                    {/* <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Net Price (₹)</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
@@ -559,7 +626,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 className="w-full pl-7 pr-2 py-1 text-sm bg-gray-50 border border-gray-300 rounded"
                             />
                         </div>
-                    </div>
+                    </div> */}
 
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Total Price (₹)</label>

@@ -18,7 +18,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
           <p><strong>Base Unit:</strong> {product.baseUnit}</p>
           <p><strong>Secondary Unit:</strong> {product.secondaryUnit || '-'}</p>
           <p><strong>Conversion Rate:</strong> {product.conversionRate || '-'}</p>
-          <p><strong>MRP:</strong> ₹{product.mrp?.toFixed(2)}</p>
+          <p><strong>MRP:</strong> ₹{product.mrpPrice?.toFixed(2)}</p>
           <p><strong>Discount:</strong> {product.discount ? `${product.discount}%` : '-'}</p>
           <p><strong>Net Price:</strong> ₹{product.netPrice?.toFixed(2)}</p>
           <p><strong>GST:</strong> {product.gst ? `${product.gst}%` : '-'}</p>

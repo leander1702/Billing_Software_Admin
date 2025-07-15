@@ -54,6 +54,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiPackage, label: 'Products' },
     { icon: FiArchive, label: 'Product Stock List' },
     { icon: FiDollarSign, label: 'Stock Summary' },
+    { icon: FiDollarSign, label: 'ProfitReport' },
     { icon: FiPieChart, label: 'Reports' },
     { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },

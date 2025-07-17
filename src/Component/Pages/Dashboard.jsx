@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 // Importing icons from lucide-react
 import { Search, Plus, Eye, Edit, Bell, DollarSign, Users, Package, ShoppingCart, X } from 'lucide-react';
+import { Link } from 'react-router';
 
 ChartJS.register(
   CategoryScale,

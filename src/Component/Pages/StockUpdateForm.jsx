@@ -5,8 +5,8 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
     const [formData, setFormData] = useState({
         incomingDate: new Date().toISOString().split('T')[0],
         stockQuantity: '',
-        supplierName: 'Default Supplier',
-        batchNumber: 'Default Batch',
+        supplierName: '',
+        batchNumber: '',
         manufactureDate: '',
         expiryDate: '',
         mrp: product?.mrp || '0',
@@ -45,7 +45,7 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
         setIsSubmitting(true);
 
         try {
-            if (!formData.stockQuantity || !formData.supplierName || !formData.batchNumber) {
+            if (!formData.stockQuantity) {
                 throw new Error('Please fill all required fields (Stock Qty, Supplier Name, Batch Number)');
             }
 

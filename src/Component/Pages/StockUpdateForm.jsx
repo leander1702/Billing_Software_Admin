@@ -5,8 +5,8 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
     const [formData, setFormData] = useState({
         incomingDate: new Date().toISOString().split('T')[0],
         stockQuantity: '',
-        supplierName: '',
-        batchNumber: '',
+        supplierName: 'Default Supplier',
+        batchNumber: 'Default Batch',
         manufactureDate: '',
         expiryDate: '',
         mrp: product?.mrp || '0',
@@ -142,7 +142,7 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                 />
                             </div>
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Supplier Name*</label>
                                 <input
                                     type="text"
@@ -154,9 +154,9 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     placeholder="Supplier name"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Batch Number*</label>
                                 <input
                                     type="text"
@@ -168,9 +168,9 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     placeholder="Batch number"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Manufacture Date</label>
                                 <input
                                     type="date"
@@ -180,9 +180,9 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Expiry Date</label>
                                 <input
                                     type="date"
@@ -192,9 +192,9 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Sales Price (₹)</label>
                                 <input
                                     type="number"
@@ -206,9 +206,9 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Seller Price (₹)</label>
                                 <input
                                     type="number"
@@ -220,7 +220,7 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     disabled={isSubmitting}
                                 />
-                            </div>
+                            </div> */}
                         </div>
 
                         {product?.secondaryUnit && product?.conversionRate && formData.stockQuantity && (

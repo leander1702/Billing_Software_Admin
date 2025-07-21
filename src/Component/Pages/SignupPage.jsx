@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../service/api';
 
 // Simple Message Display Component
 const MessageDisplay = ({ message, type, onClose }) => {
@@ -159,9 +160,10 @@ const SignupPage = () => {
         formData.append('logo', data.logo);
       }
 
-      const response = await fetch('http://localhost:5000/api/company/register', {
-        method: 'POST',
-        body: formData, // Automatically sets Content-Type with boundary
+      const response = await api.post('/company/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data' // Important for file uploads
+        }
       });
 
       if (!response.ok) {

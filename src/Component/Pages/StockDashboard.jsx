@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FiPackage, FiTrendingUp, FiAlertTriangle, FiCalendar, FiClock, FiLoader } from 'react-icons/fi';
 import StockUpdateForm from './StockUpdateForm';
+import api from '../../service/api';
 
 const StockDashboard = () => {
   const [stockSummary, setStockSummary] = useState([]);
@@ -12,21 +13,25 @@ const StockDashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState(null);
 
-  const fetchStockSummary = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('http://localhost:5000/api/stock-summary');
-      if (!res.ok) throw new Error('Failed to fetch stock data');
-      const data = await res.json();
-      setStockSummary(data || []);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to load stock summary:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+ const fetchStockSummary = async () => {
+  try {
+    setLoading(true);
+    const response = await api.get('/stock-summary');
+    setStockSummary(response.data || []);
+    setError(null);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch stock data';
+      console.error('Failed to load stock summary:', errorMessage);
+      setError(errorMessage);
+    } else {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchStockSummary();

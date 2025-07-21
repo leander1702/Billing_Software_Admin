@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
 import { toast } from 'react-toastify';
 import CredentialForm from "./CredentialForm";
+import api from "../../service/api";
 const AdminProfile = () => {
   const formik = useFormik({
     initialValues: {
@@ -58,7 +58,7 @@ const AdminProfile = () => {
           formData.append("signature", values.signature);
         }
 
-        const response = await axios.post("http://localhost:5000/api/companies/register", formData, {
+        const response = await api.post("/companies/register", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },

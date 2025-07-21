@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { FiEdit, FiTrash2, FiSearch, FiPlus, FiEye } from 'react-icons/fi';
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import api from '../../service/api';
 
 // ProductDetailsModal Component (Can be in a separate file)
 const ProductDetailsModal = ({ product, onClose }) => {
@@ -67,7 +67,7 @@ const ProductStockList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('/api/products');
+        const response = await api.get('/products');
         console.log('Response:', response.status, response.data); 
         const productsData = Array.isArray(response.data) ? response.data : response.data.products || [];
         setProducts(productsData);
@@ -145,7 +145,7 @@ const ProductStockList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
       try {
-        await axios.delete(`/api/admin/products/${id}`);
+        await api.delete(`/admin/products/${id}`);
         setProducts(products.filter(product => product._id !== id));
         // Also update filteredProducts to reflect the deletion immediately
         setFilteredProducts(prev => prev.filter(product => product._id !== id));

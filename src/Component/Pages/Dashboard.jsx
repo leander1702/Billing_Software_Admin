@@ -13,6 +13,7 @@ import {
 // Importing icons from lucide-react
 import { Search, Plus, Eye, Edit, Bell, DollarSign, Users, Package, ShoppingCart, X } from 'lucide-react';
 import { Link } from 'react-router';
+import api from '../../service/api';
 
 ChartJS.register(
   CategoryScale,
@@ -61,25 +62,28 @@ const Dashboard = () => {
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showTopSellingChart, setShowTopSellingChart] = useState(true);
 
-  useEffect(() => {
-    // Fetch bills data
-    const fetchBills = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/bills');
-        const data = await response.json();
-        setBills(data);
-
-        // Process data for dashboard
-        processDashboardData(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching bills:', error);
-        setLoading(false);
+useEffect(() => {
+  // Fetch bills data with Axios
+  const fetchBills = async () => {
+    try {
+      const { data } = await api.get('/bills');
+      setBills(data);
+      
+      // Process data for dashboard
+      processDashboardData(data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error fetching bills:', error.response?.data || error.message);
+      } else {
+        console.error('Unexpected error:', error);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchBills();
-  }, []);
+  fetchBills();
+}, []);
 
   const processDashboardData = (billsData) => {
     const allProducts = billsData.flatMap(bill => bill.products);

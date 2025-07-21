@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Search, Printer } from 'lucide-react';
+import api from '../../service/api';
 
 const CustomerHistoryModal = ({ customer, onClose }) => {
   if (!customer) return null;
@@ -215,51 +216,36 @@ const Customers = () => {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const customerMap = new Map();
+
+      // Try to fetch customers first
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Try to fetch customers first
-        let customersResponse;
-        try {
-          customersResponse = await fetch('http://localhost:5000/api/customers');
-          if (!customersResponse.ok) {
-            throw new Error(`Customers API returned ${customersResponse.status}`);
-          }
-        } catch (customersError) {
-          console.warn('Failed to fetch customers directly:', customersError.message);
-          customersResponse = null;
-        }
-
-        // Then fetch bills
-        const billsResponse = await fetch('http://localhost:5000/api/bills');
-        if (!billsResponse.ok) {
-          throw new Error(`Bills API returned ${billsResponse.status}`);
-        }
-        const billsData = await billsResponse.json();
-
-        // Process data
-        const customerMap = new Map();
-
-        // Add customers from customers API if available
-        if (customersResponse) {
-          const customersData = await customersResponse.json();
-          customersData.forEach(customer => {
-            customerMap.set(customer._id, {
-              id: customer._id,
-              name: customer.name,
-              contact: customer.contact,
-              aadhar: customer.aadhar || 'N/A',
-              location: customer.location || 'N/A',
-              bills: []
-            });
+        const customersResponse = await api.get('http://localhost:5000/api/customers');
+        customersResponse.data.forEach(customer => {
+          customerMap.set(customer._id, {
+            id: customer._id,
+            name: customer.name,
+            contact: customer.contact,
+            aadhar: customer.aadhar || 'N/A',
+            location: customer.location || 'N/A',
+            bills: []
           });
-        }
+        });
+      } catch (customersError) {
+        console.warn('Failed to fetch customers directly:', customersError.message);
+        // Continue with bills fetch even if customers API fails
+      }
 
-        // Process bills and add any missing customers
-        billsData.forEach(bill => {
+      // Then fetch bills
+      try {
+        const billsResponse = await api.get('http://localhost:5000/api/bills');
+        billsResponse.data.forEach(bill => {
           if (bill.customer) {
             const customerId = bill.customer._id || bill.customer.id;
             const customerName = bill.customer.name || 'Unknown Customer';
@@ -289,16 +275,20 @@ const Customers = () => {
         const uniqueCustomers = Array.from(customerMap.values());
         setCustomers(uniqueCustomers);
         setFilteredCustomers(uniqueCustomers);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+      } catch (billsError) {
+        throw new Error(`Failed to fetch bills: ${billsError.message}`);
       }
-    };
 
-    fetchData();
-  }, []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   useEffect(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();

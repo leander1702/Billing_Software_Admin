@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../../service/api';
 
 const SellerExpenseList = () => {
     const [sellerData, setSellerData] = useState([]);
@@ -23,8 +23,8 @@ const SellerExpenseList = () => {
                 const params = new URLSearchParams();
                 if (dateRange.start) params.append('startDate', dateRange.start);
                 if (dateRange.end) params.append('endDate', dateRange.end);
-                
-                const response = await axios.get(`/api/products/seller-expenses?${params.toString()}`);
+
+                const response = await api.get(`/products/seller-expenses?${params.toString()}`);
                 setSellerData(response.data);
                 setLoading(false);
             } catch (err) {
@@ -103,13 +103,13 @@ const SellerExpenseList = () => {
 
     const exportToCSV = () => {
         const headers = [
-            'Supplier Name', 'Batch Number', 'Product Code', 'Product Name', 
+            'Supplier Name', 'Batch Number', 'Product Code', 'Product Name',
             'Quantity', 'Unit', 'Cost Price', 'MRP', 'Profit', 'Added Date'
         ];
-        
+
         const csvData = [
             headers.join(','),
-            ...filteredSellers.flatMap(seller => 
+            ...filteredSellers.flatMap(seller =>
                 seller.products.map(product => [
                     `"${seller.supplierName}"`,
                     `"${seller.batchNumber}"`,
@@ -121,7 +121,7 @@ const SellerExpenseList = () => {
                     product.mrp,
                     (product.mrp - product.sellerPrice) * product.addedStock,
                     `"${formatDate(product.createdAt)}"`].join(',')).join('\n'))];
-        
+
         const blob = new Blob([csvData], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -242,7 +242,7 @@ const SellerExpenseList = () => {
                         id="startDate"
                         className="px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-700"
                         value={dateRange.start}
-                        onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                        onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                     />
                 </div>
                 <div className="flex items-center">
@@ -252,7 +252,7 @@ const SellerExpenseList = () => {
                         id="endDate"
                         className="px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-700"
                         value={dateRange.end}
-                        onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                        onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                     />
                 </div>
                 <button
@@ -313,13 +313,13 @@ const SellerExpenseList = () => {
                                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                                     <tr>
-                                                        <th 
+                                                        <th
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                                                             onClick={() => requestSort('productName')}
                                                         >
                                                             Product <SortIndicator columnKey="productName" />
                                                         </th>
-                                                        <th 
+                                                        <th
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                                                             onClick={() => requestSort('productCode')}
                                                         >
@@ -328,25 +328,25 @@ const SellerExpenseList = () => {
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                             Category
                                                         </th>
-                                                        <th 
+                                                        <th
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                                                             onClick={() => requestSort('addedStock')}
                                                         >
                                                             Qty <SortIndicator columnKey="addedStock" />
                                                         </th>
-                                                        <th 
+                                                        <th
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                                                             onClick={() => requestSort('sellerPrice')}
                                                         >
                                                             Cost <SortIndicator columnKey="sellerPrice" />
                                                         </th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                            MRP
+                                                            Sales Price
                                                         </th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                             Profit
                                                         </th>
-                                                        <th 
+                                                        <th
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                                                             onClick={() => requestSort('createdAt')}
                                                         >
@@ -444,11 +444,10 @@ const SellerExpenseList = () => {
                                                 GST: {sellerGroup.gstCategory || 'Non-GST'}
                                             </div>
                                             <button
-                                                className={`px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                                                    paymentStatus[sellerKey] 
+                                                className={`px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${paymentStatus[sellerKey]
                                                         ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
                                                         : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                                                }`}
+                                                    }`}
                                                 onClick={() => markAsPaid(sellerKey)}
                                             >
                                                 {paymentStatus[sellerKey] ? 'Paid' : 'Mark as Paid'}
@@ -476,9 +475,8 @@ const SellerExpenseList = () => {
                             <button
                                 key={i}
                                 onClick={() => setCurrentPage(i + 1)}
-                                className={`px-3 py-2 border-t border-b border-gray-300 ${
-                                    currentPage === i + 1 ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-500 hover:bg-gray-50'
-                                }`}
+                                className={`px-3 py-2 border-t border-b border-gray-300 ${currentPage === i + 1 ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-500 hover:bg-gray-50'
+                                    }`}
                             >
                                 {i + 1}
                             </button>

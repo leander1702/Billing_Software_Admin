@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import {
   FiHome, FiCreditCard, FiUsers, FiPackage, FiFileText, FiArchive,
   FiDollarSign, FiPieChart, FiSettings, FiUser, FiCloud,
   FiChevronLeft, FiChevronRight, FiLogOut
 } from 'react-icons/fi';
+import { GiExpense, GiProfit } from "react-icons/gi";
+import api from '../service/api';
 
 // NavItem component for individual navigation links
 const NavItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
@@ -29,7 +30,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
   const [admin, setAdmin] = useState({});
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/companies')
+    api.get('/companies')
       .then(res => {
         if (res.data.length > 0) {
           setCompany(res.data[0]);
@@ -37,7 +38,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
       })
       .catch(err => console.error('Error fetching company data:', err));
 
-    axios.get('http://localhost:5000/api/credentials/admin')
+    api.get('/credentials/admin')
       .then(res => {
         if (res.data) {
           setAdmin(res.data);
@@ -54,8 +55,8 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiPackage, label: 'Products' },
     { icon: FiArchive, label: 'Product Stock List' },
     { icon: FiDollarSign, label: 'Stock Summary' },
-    { icon: FiDollarSign, label: 'ProfitReport' },
-    { icon: FiDollarSign, label: 'Expense Menu' },
+    { icon: GiProfit, label: 'ProfitReport' },
+    { icon: GiExpense, label: 'Expense Menu' },
     { icon: FiPieChart, label: 'Reports' },
     { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },

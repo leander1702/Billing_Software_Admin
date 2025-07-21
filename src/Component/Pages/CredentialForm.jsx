@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import axios from 'axios';
 import { toast } from 'react-toastify';
+import api from '../../service/api';
 
 function CredentialForm({
   showAdminModal: externalShowAdmin = false,
@@ -52,7 +52,7 @@ function CredentialForm({
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/credentials/admin', adminData);
+      const response = await api.post('/credentials/admin', adminData);
       toast.success(response.data.message);
       resetAdminForm();
       handleCloseAdmin();
@@ -71,7 +71,7 @@ function CredentialForm({
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/credentials/users', userData);
+      const response = await api.post('/credentials/users', userData);
       toast.success(response.data.message);
       resetUserForm();
       handleCloseUser();

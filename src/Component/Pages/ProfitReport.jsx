@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../service/api';
 
 const ProfitReport = () => {
     const [products, setProducts] = useState([]);
@@ -67,8 +67,8 @@ const ProfitReport = () => {
 
             // Fetch data in parallel
             const [productsRes, historyRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/products`),
-                axios.get(`http://localhost:5000/api/products/stock-history?${queryParams.toString()}`)
+                api.get(`/products`),
+                api.get(`/products/stock-history?${queryParams.toString()}`)
             ]);
 
             setProducts(productsRes.data);
@@ -164,7 +164,7 @@ const ProfitReport = () => {
                             <tr className="bg-gray-100">
                                 <th className="py-2 px-4 border">Code</th>
                                 <th className="py-2 px-4 border">Product</th>
-                                <th className="py-2 px-4 border">MRP</th>
+                                <th className="py-2 px-4 border">Sales Price</th>
                                 <th className="py-2 px-4 border">Seller Price</th>
                                 <th className="py-2 px-4 border">Profit/Unit</th>
                                 <th className="py-2 px-4 border">Initial Qty</th>

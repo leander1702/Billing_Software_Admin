@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../service/api';
 
 const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -74,8 +74,8 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
                 conversionRate: product.conversionRate
             };
 
-            const response = await axios.put(
-                `http://localhost:5000/api/products/stock/${product.productCode}`,
+            const response = await api.put(
+                `/products/stock/${product.productCode}`,
                 updateData,
                 {
                     headers: {

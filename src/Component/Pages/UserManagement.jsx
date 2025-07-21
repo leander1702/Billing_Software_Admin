@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { FiEdit, FiTrash2, FiSave, FiX, FiUser, FiBriefcase, FiCreditCard, FiUserX } from "react-icons/fi";
+import api from "../../service/api";
 
 const UserManagement = ({ setActivePage }) => {
   const [latestCompany, setLatestCompany] = useState(null);
@@ -22,9 +22,9 @@ const UserManagement = ({ setActivePage }) => {
     const fetchAllData = async () => {
       try {
         const [companyRes, adminRes, userRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/companies"),
-          axios.get("http://localhost:5000/api/credentials/admin"),
-          axios.get("http://localhost:5000/api/credentials/users")
+          api.get("/companies"),
+          api.get("/credentials/admin"),
+          api.get("/credentials/users")
         ]);
 
         const sortedCompanies = companyRes.data.sort(
@@ -104,15 +104,15 @@ const UserManagement = ({ setActivePage }) => {
   const handleSave = async (type, id = null) => {
     try {
       if (type === 'company') {
-        await axios.put(`http://localhost:5000/api/companies/${latestCompany._id}`, formData.company);
+        await api.put(`/companies/${latestCompany._id}`, formData.company);
         setLatestCompany(formData.company);
         setEditing({ ...editing, company: false });
       } else if (type === 'admin') {
-        await axios.put(`http://localhost:5000/api/credentials/admin/${admin._id}`, formData.admin);
+        await api.put(`/credentials/admin/${admin._id}`, formData.admin);
         setAdmin(formData.admin);
         setEditing({ ...editing, admin: false });
       } else {
-        await axios.put(`http://localhost:5000/api/credentials/users/${id}`, formData.users[id]);
+        await api.put(`/credentials/users/${id}`, formData.users[id]);
         setUsers(users.map(u => u._id === id ? formData.users[id] : u));
         setEditing({ ...editing, users: { ...editing.users, [id]: false } });
       }
@@ -123,7 +123,7 @@ const UserManagement = ({ setActivePage }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/credentials/users/${id}`);
+      await api.delete(`/credentials/users/${id}`);
       setUsers(users.filter(u => u._id !== id));
     } catch (error) {
       console.error("Error deleting user:", error);

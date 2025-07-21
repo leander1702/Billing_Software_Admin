@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import '../App.css';
+import api from '../service/api';
 
 const ProductForm = ({ onSubmit, product, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -58,8 +58,8 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         const calculatePrice = async () => {
             if (formData.productCode && selectedUnit && formData.stockQuantity) {
                 try {
-                    const res = await axios.get(
-                        `http://localhost:5000/api/products/calculate-price/${formData.productCode}`,
+                    const res = await api.get(
+                        `/products/calculate-price/${formData.productCode}`,
                         {
                             params: {
                                 unit: selectedUnit,
@@ -237,7 +237,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         if (!barcode) return;
 
         try {
-            const res = await axios.get(`http://localhost:5000/api/products/barcode/${barcode}`);
+            const res = await api.get(`/products/barcode/${barcode}`);
             const data = res.data;
 
             if (!data) {
@@ -314,12 +314,12 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
 
         try {
             const url = product
-                ? `http://localhost:5000/api/products/${product._id}`
-                : 'http://localhost:5000/api/products';
+                ? `/products/${product._id}`
+                : '/products';
 
             const method = product ? 'put' : 'post';
 
-            const res = await axios[method](url, preparedData);
+            const res = await api[method](url, preparedData);
             console.log('Product saved successfully:', res.data);
 
             onSubmit(res.data);

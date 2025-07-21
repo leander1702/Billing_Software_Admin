@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Search } from 'lucide-react'; // Import X icon for the modal close button
+import api from '../../service/api';
 
 // Product Details Modal Component (reused and slightly adapted)
 const ProductDetailsModal = ({ selectedBill, onClose }) => {
@@ -108,24 +109,26 @@ const BillingInvoices = () => {
   const [filteredBills, setFilteredBills] = useState([]); // New state for filtered bills
 
   useEffect(() => {
-    // Fetch bills data from the API
-    fetch('http://localhost:5000/api/bills')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        setBills(data);
-        setFilteredBills(data); // Initialize filtered bills with all bills
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching customers:', err);
-        setIsLoading(false);
-      });
-  }, []);
+  const fetchBills = async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await api.get('http://localhost:5000/api/bills');
+      setBills(data);
+      setFilteredBills(data); // Initialize filtered bills with all bills
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error fetching bills:', 
+          error.response?.data?.message || error.message);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchBills();
+}, []);
 
   // Effect to filter bills whenever searchTerm or bills change
   useEffect(() => {

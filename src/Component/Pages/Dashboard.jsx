@@ -10,9 +10,8 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-// Importing icons from lucide-react
 import { Search, Plus, Eye, Edit, Bell, DollarSign, Users, Package, ShoppingCart, X } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import api from '../../service/api';
 
 ChartJS.register(
@@ -38,8 +37,8 @@ const NotificationModal = ({ alerts, onClose }) => {
           <ul className="divide-y divide-gray-200 max-h-60 overflow-y-auto">
             {alerts.map((alert, index) => (
               <li key={index} className="py-3 flex justify-between items-center">
-                <span className="text-base font-medium text-gray-800">{alert.name}</span>
-                <span className="text-base text-red-600 font-semibold">{alert.quantity} left</span>
+                <span className="text-base font-medium text-gray-800">{alert.productName}</span>
+                <span className="text-base text-red-600 font-semibold">{alert.currentStock} left</span>
               </li>
             ))}
           </ul>
@@ -62,42 +61,38 @@ const Dashboard = () => {
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showTopSellingChart, setShowTopSellingChart] = useState(true);
 
-useEffect(() => {
-  // Fetch bills data with Axios
-  const fetchBills = async () => {
-    try {
-      const { data } = await api.get('/bills');
-      setBills(data);
-      
-      // Process data for dashboard
-      processDashboardData(data);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Error fetching bills:', error.response?.data || error.message);
-      } else {
-        console.error('Unexpected error:', error);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch bills data
+        const billsResponse = await api.get('/bills');
+        setBills(billsResponse.data);
+        
+        // Process data for dashboard
+        processDashboardData(billsResponse.data);
+        
+        // Fetch low stock products from your API
+        const stockResponse = await api.get('/stock-summary');
+        const lowStockItems = stockResponse.data.filter(item => item.currentStock < 10);
+        setLowStockAlerts(lowStockItems.map(item => ({
+          productName: item.productName,
+          currentStock: item.currentStock
+        })));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchBills();
-}, []);
+    fetchData();
+  }, []);
 
   const processDashboardData = (billsData) => {
     const allProducts = billsData.flatMap(bill => bill.products);
-    const productStock = {};
     const productSales = {};
 
     allProducts.forEach(product => {
-      // For stock calculation
-      if (!productStock[product.name]) {
-        productStock[product.name] = product.quantity;
-      } else {
-        productStock[product.name] += product.quantity;
-      }
-
       // For sales calculation
       if (!productSales[product.name]) {
         productSales[product.name] = product.quantity;
@@ -105,12 +100,6 @@ useEffect(() => {
         productSales[product.name] += product.quantity;
       }
     });
-
-    // Low Stock Alerts (assuming quantity < 10 is low stock)
-    const alerts = Object.entries(productStock)
-      .filter(([_, quantity]) => quantity < 10)
-      .map(([name, quantity]) => ({ name, quantity }));
-    setLowStockAlerts(alerts);
 
     // Top Selling Products
     const topSelling = Object.entries(productSales)
@@ -154,8 +143,8 @@ useEffect(() => {
       {
         label: 'Monthly Revenue',
         data: months.map((_, index) => monthlyRevenue[index] || 0),
-        backgroundColor: 'rgba(59, 130, 246, 0.7)', // Deeper blue
-        borderColor: 'rgba(29, 78, 216, 1)', // Darker blue border
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgba(29, 78, 216, 1)',
         borderWidth: 1,
         hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
       },
@@ -164,7 +153,7 @@ useEffect(() => {
 
   const monthlyRevenueChartOptions = {
     responsive: true,
-    maintainAspectRatio: false, // Allow chart to fill container
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -248,11 +237,11 @@ useEffect(() => {
       {
         data: products.map(p => p.sales),
         backgroundColor: [
-          '#3B82F6', // blue-500
-          '#60A5FA', // blue-400
-          '#93C5FD', // blue-300
-          '#BFDBFE', // blue-200
-          '#DBEAFE', // blue-100
+          '#3B82F6',
+          '#60A5FA',
+          '#93C5FD',
+          '#BFDBFE',
+          '#DBEAFE',
         ],
         borderColor: '#ffffff',
         borderWidth: 2,
@@ -305,7 +294,6 @@ useEffect(() => {
     }
   };
 
-
   // Filter customers for the table
   const customers = bills.reduce((acc, bill) => {
     const existingCustomer = acc.find(c => c.id === bill.customer.id);
@@ -323,7 +311,7 @@ useEffect(() => {
       }
     }
     return acc;
-  }, []).sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit)); // Sort by last visit
+  }, []).sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit));
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -374,10 +362,10 @@ useEffect(() => {
               <Plus className="mr-2 h-4 w-4" />
               Add New Product
             </button>
-            <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+            <Link to="/stock-summary" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
               <Eye className="mr-2 h-4 w-4" />
               View Stock Summary
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -458,7 +446,7 @@ useEffect(() => {
                   <div className="flex items-center">
                     <div className="ml-2 w-0 flex-1">
                       <dl>
-                        <dt className="text-base font-medium text-gray-500 truncate">Products in Stock </dt>
+                        <dt className="text-base font-medium text-gray-500 truncate">Products in Stock</dt>
                         <p className='text-xs font-medium text-gray-500 pb-2'>Last 30 days</p>
                         <dd className="flex items-baseline">
                           <div className="text-lg font-bold text-gray-900">
@@ -526,10 +514,10 @@ useEffect(() => {
                   )}
                 </div>
               </div>
-
             </div>
+
             {/* Alerts and Customer Overview */}
-            <div className="mb-8 '">
+            <div className="mb-8">
               {/* Low Stock Alerts */}
               <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
                 <div className="px-6 py-5 border-b border-gray-200 bg-red-50">
@@ -542,8 +530,8 @@ useEffect(() => {
                     <ul className="divide-y divide-red-100">
                       {lowStockAlerts.map((alert, index) => (
                         <li key={index} className="py-3 flex justify-between items-center">
-                          <div className="text-base font-medium text-gray-900">{alert.name}</div>
-                          <div className="text-base text-red-600 font-semibold">Only {alert.quantity} left</div>
+                          <div className="text-base font-medium text-gray-900">{alert.productName}</div>
+                          <div className="text-base text-red-600 font-semibold">Only {alert.currentStock} left</div>
                         </li>
                       ))}
                     </ul>

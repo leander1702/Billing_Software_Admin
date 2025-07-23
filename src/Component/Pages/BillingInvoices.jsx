@@ -112,7 +112,7 @@ const BillingInvoices = () => {
   const fetchBills = async () => {
     try {
       setIsLoading(true);
-      const { data } = await api.get('http://localhost:5000/api/bills');
+      const { data } = await api.get('/bills');
       setBills(data);
       setFilteredBills(data); // Initialize filtered bills with all bills
     } catch (error) {

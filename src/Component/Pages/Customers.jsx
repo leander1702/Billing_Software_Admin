@@ -226,7 +226,7 @@ const Customers = () => {
 
       // Try to fetch customers first
       try {
-        const customersResponse = await api.get('http://localhost:5000/api/customers');
+        const customersResponse = await api.get('/customers');
         customersResponse.data.forEach(customer => {
           customerMap.set(customer._id, {
             id: customer._id,
@@ -244,7 +244,7 @@ const Customers = () => {
 
       // Then fetch bills
       try {
-        const billsResponse = await api.get('http://localhost:5000/api/bills');
+        const billsResponse = await api.get('/bills');
         billsResponse.data.forEach(bill => {
           if (bill.customer) {
             const customerId = bill.customer._id || bill.customer.id;

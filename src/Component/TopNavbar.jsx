@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { FiUser, FiChevronDown, FiLogOut, FiUserPlus } from 'react-icons/fi';
+import api from '../service/api';
 
 
 const TopNavbar = ({ setActivePage }) => {
@@ -12,7 +12,7 @@ const TopNavbar = ({ setActivePage }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/companies')
+    api.get('/companies')
       .then(res => {
         if (res.data.length > 0) {
           setCompany(res.data[0]);
@@ -20,7 +20,7 @@ const TopNavbar = ({ setActivePage }) => {
       })
       .catch(err => console.error('Error fetching company data:', err));
 
-    axios.get('http://localhost:5000/api/credentials/admin')
+    api.get('/credentials/admin')
       .then(res => {
         if (res.data) {
           setAdmin(res.data);

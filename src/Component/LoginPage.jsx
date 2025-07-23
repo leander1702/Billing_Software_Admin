@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import logo from '../../src/assets/ATS LOGO BLUE.svg';
 import bill from '../../src/assets/IMG1.svg';
+import api from '../service/api';
 
 const LoginPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -24,7 +24,7 @@ const LoginPage = () => {
     }
 
     try {
-      const res = await axios.get("http://localhost:5000/api/credentials/admin");
+      const res = await api.get("/credentials/admin");
 
       const adminData = res.data; // Single admin object
 

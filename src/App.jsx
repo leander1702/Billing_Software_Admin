@@ -16,6 +16,7 @@ import TopNavbar from './Component/TopNavbar';
 import BillingInvoices from './Component/Pages/BillingInvoices';
 import { ToastContainer } from 'react-toastify';
 import ProfitReport from './Component/Pages/ProfitReport';
+import SellerExpenseList from './Component/Pages/SellerExpenseList';
 
 
 const MainLayout = ({ activePage, setActivePage }) => (
@@ -32,6 +33,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'Product Stock List' && <ProductStockList />}
         {activePage === 'Stock Summary' && <StockDashboard />}
         {activePage === 'ProfitReport' && <ProfitReport />}
+        {activePage === 'Expense Menu' && <SellerExpenseList />}
         {activePage === 'Admin Management' && <AdminProfile />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>
@@ -52,7 +54,7 @@ function App() {
           path="/admin"
           element={<>
             <MainLayout activePage={activePage} setActivePage={setActivePage} />
-            <ToastContainer />
+            {/* <ToastContainer /> */}
           </>}
         />
       </Routes>

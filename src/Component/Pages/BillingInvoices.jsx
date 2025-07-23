@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { X, Search } from 'lucide-react'; // Import X icon for the modal close button
+import { X, Search } from 'lucide-react';
 import api from '../../service/api';
+import axios from 'axios'; // Make sure to import axios
 
-// Product Details Modal Component (reused and slightly adapted)
+// Product Details Modal Component
 const ProductDetailsModal = ({ selectedBill, onClose }) => {
   if (!selectedBill) return null;
+
+  // Safely access nested properties
+  const customerName = selectedBill.customer?.name || 'N/A';
+  const customerId = selectedBill.customer?.id || 'N/A';
+  const customerContact = selectedBill.customer?.contact || 'N/A';
+  const billTotal = selectedBill.total ? selectedBill.total.toFixed(2) : '0.00';
+  const products = selectedBill.products || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -12,23 +20,23 @@ const ProductDetailsModal = ({ selectedBill, onClose }) => {
         <div className="p-6">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Order Details (Bill ID: {selectedBill._id})</h3> {/* Changed to selectedBill._id */}
+              <h3 className="text-lg font-medium text-gray-900">Order Details (Bill ID: {selectedBill._id || 'N/A'})</h3>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(selectedBill.date).toLocaleString('en-IN', {
+                {selectedBill.date ? new Date(selectedBill.date).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: true
-                })}
+                }) : 'Date not available'}
               </p>
             </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
             >
-              <X className="h-6 w-6" /> {/* Using Lucide React X icon */}
+              <X className="h-6 w-6" />
             </button>
           </div>
 
@@ -36,9 +44,9 @@ const ProductDetailsModal = ({ selectedBill, onClose }) => {
             <div>
               <h4 className="text-sm font-medium text-gray-500 mb-2">Customer Information</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-gray-900">{selectedBill.customer.name}</p>
-                <p className="text-sm text-gray-500 mt-1">ID: {selectedBill.customer.id}</p>
-                <p className="text-sm text-gray-500 mt-1">Contact: {selectedBill.customer.contact}</p>
+                <p className="text-sm font-medium text-gray-900">{customerName}</p>
+                <p className="text-sm text-gray-500 mt-1">ID: {customerId}</p>
+                <p className="text-sm text-gray-500 mt-1">Contact: {customerContact}</p>
               </div>
             </div>
 
@@ -47,11 +55,11 @@ const ProductDetailsModal = ({ selectedBill, onClose }) => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Subtotal:</span>
-                  <span className="text-sm font-medium">₹ {selectedBill.total.toFixed(2)}</span>
+                  <span className="text-sm font-medium">₹ {billTotal}</span>
                 </div>
                 <div className="flex justify-between mt-2">
                   <span className="text-sm text-gray-500">Items:</span>
-                  <span className="text-sm font-medium">{selectedBill.products.length}</span>
+                  <span className="text-sm font-medium">{products.length}</span>
                 </div>
               </div>
             </div>
@@ -70,16 +78,25 @@ const ProductDetailsModal = ({ selectedBill, onClose }) => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedBill.products.map((product, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹ {product.price.toFixed(2)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{product.quantity}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                        ₹ {(product.price * product.quantity).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
+                  {products.map((product, index) => {
+                    const productPrice = product.price ? product.price.toFixed(2) : '0.00';
+                    const productTotal = product.price && product.quantity 
+                      ? (product.price * product.quantity).toFixed(2) 
+                      : '0.00';
+                    
+                    return (
+                      <tr key={index}>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {product.name || 'Unnamed Product'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹ {productPrice}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{product.quantity || 0}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                          ₹ {productTotal}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -99,44 +116,44 @@ const ProductDetailsModal = ({ selectedBill, onClose }) => {
   );
 };
 
-
 const BillingInvoices = () => {
   const [bills, setBills] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // New state for search term
-  const [filteredBills, setFilteredBills] = useState([]); // New state for filtered bills
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredBills, setFilteredBills] = useState([]);
 
   useEffect(() => {
-  const fetchBills = async () => {
-    try {
-      setIsLoading(true);
-      const { data } = await api.get('/bills');
-      setBills(data);
-      setFilteredBills(data); // Initialize filtered bills with all bills
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Error fetching bills:', 
-          error.response?.data?.message || error.message);
-      } else {
-        console.error('Unexpected error:', error);
+    const fetchBills = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await api.get('/bills');
+        setBills(data);
+        setFilteredBills(data);
+        console.log("dd", data);
+        
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error('Error fetching bills:', 
+            error.response?.data?.message || error.message);
+        } else {
+          console.error('Unexpected error:', error);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  fetchBills();
-}, []);
+    fetchBills();
+  }, []);
 
-  // Effect to filter bills whenever searchTerm or bills change
   useEffect(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     const currentFilteredBills = bills.filter(bill => {
-      const customerName = bill.customer.name ? bill.customer.name.toLowerCase() : '';
-      const customerId = bill.customer.id ? bill.customer.id.toLowerCase() : '';
-      const customerContact = bill.customer.contact ? bill.customer.contact.toLowerCase() : '';
+      const customerName = bill.customer?.name ? bill.customer.name.toLowerCase() : '';
+      const customerId = bill.customer?.id ? bill.customer.id.toString().toLowerCase() : '';
+      const customerContact = bill.customer?.contact ? bill.customer.contact.toLowerCase() : '';
       const billIdLastSix = bill._id ? bill._id.substring(bill._id.length - 6).toLowerCase() : '';
 
       return (
@@ -149,13 +166,11 @@ const BillingInvoices = () => {
     setFilteredBills(currentFilteredBills);
   }, [searchTerm, bills]);
 
-  // Function to open the product details modal
   const openProductDetails = (bill) => {
     setSelectedBill(bill);
     setIsModalOpen(true);
   };
 
-  // Function to close the product details modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedBill(null);
@@ -165,10 +180,8 @@ const BillingInvoices = () => {
     <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-900">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
-          {/* Heading */}
           <h2 className="text-3xl font-bold text-gray-800">Customer Bills</h2>
 
-          {/* Search Input + Record Count */}
           <div className="flex flex-col space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-72">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,15 +196,11 @@ const BillingInvoices = () => {
               />
             </div>
 
-            {/* Record Count */}
             <div className="text-sm text-gray-600 pl-1 sm:pl-0">
               {filteredBills.length} {filteredBills.length === 1 ? 'Bill' : 'Bills'} 
             </div>
           </div>
         </div>
-
-
-
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -220,7 +229,6 @@ const BillingInvoices = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {/* Bill ID column header */}
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Bill ID
                     </th>
@@ -245,61 +253,67 @@ const BillingInvoices = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {filteredBills.map((bill) => (
-                    <tr key={bill._id} className="hover:bg-gray-50"> {/* Changed key to bill._id */}
-                      {/* Bill ID data cell */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {bill._id.substring(bill._id.length - 6)} {/* Displaying last 6 characters of _id */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {/* Optional: Customer initial circle or avatar */}
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
-                            {bill.customer.name ? bill.customer.name.charAt(0).toUpperCase() : 'N/A'}
+                  {filteredBills.map((bill) => {
+                    const billTotal = bill.grandTotal ? bill.grandTotal.toFixed(2) : '0.00';
+                    const customerInitial = bill.customer?.name ? bill.customer.name.charAt(0).toUpperCase() : 'N/A';
+                    const customerName = bill.customer?.name || 'N/A';
+                    const customerId = bill.customer?.id || 'N/A';
+                    const customerContact = bill.customer?.contact || 'N/A';
+                    const billDate = bill.date ? new Date(bill.date).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    }) : 'N/A';
+
+                    return (
+                      <tr key={bill._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {bill._id ? bill._id.substring(bill._id.length - 6) : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
+                              {customerInitial}
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{customerName}</div>
+                              <div className="text-sm text-gray-500">ID: {customerId}</div>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{bill.customer.name}</div>
-                            <div className="text-sm text-gray-500">ID: {bill.customer.id}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customerContact}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {bill.products?.length || 0} items
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {billDate}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {bill.customer.contact}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {bill.products.length} items
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(bill.date).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                          ₹ {bill.total.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openProductDetails(bill)}
-                          className="text-blue-600 hover:text-blue-900 font-semibold transition-colors duration-200"
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            ₹ {billTotal}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => openProductDetails(bill)}
+                            className="text-blue-600 hover:text-blue-900 font-semibold transition-colors duration-200"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* Product Details Modal */}
         {isModalOpen && (
           <ProductDetailsModal
             selectedBill={selectedBill}

@@ -5,8 +5,8 @@ import api from '../../service/api';
 const CustomerHistoryModal = ({ customer, onClose }) => {
   if (!customer) return null;
 
-  // Calculate total payment amount
-  const totalPaymentAmount = customer.bills.reduce((sum, bill) => sum + bill.total, 0);
+  // Calculate total payment amount with null checks
+  const totalPaymentAmount = customer.bills.reduce((sum, bill) => sum + (bill.total || 0), 0);
 
   // Function to handle printing
   const handlePrint = () => {
@@ -146,33 +146,33 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                       {customer.bills.map((bill) => (
                         <tr key={bill._id}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {bill._id.substring(bill._id.length - 6)}
+                            {bill._id?.substring(bill._id.length - 6) || 'N/A'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(bill.date).toLocaleString('en-IN', {
+                            {bill.date ? new Date(bill.date).toLocaleString('en-IN', {
                               year: 'numeric',
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit',
                               hour12: true
-                            })}
+                            }) : 'N/A'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-500">
                             <ul className="list-disc list-inside">
-                              {bill.products.map((product, pIdx) => (
+                              {bill.products?.map((product, pIdx) => (
                                 <li key={pIdx}>
-                                  {product.name} (x{product.quantity}) 
-                                  {product.price && <span className="text-gray-400 ml-1">@ ₹{product.price.toFixed(2)}</span>}
+                                  {product.name || 'Unknown Product'} (x{product.quantity || 0}) 
+                                  {product.price !== undefined && <span className="text-gray-400 ml-1">@ ₹{(product.price || 0).toFixed(2)}</span>}
                                 </li>
                               ))}
                             </ul>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
-                            ₹ {bill.subtotal?.toFixed(2) || bill.products.reduce((sum, p) => sum + (p.price * p.quantity), 0).toFixed(2)}
+                            ₹ {(bill.subtotal || bill.products?.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0), 0) || 0).toFixed(2))}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            ₹ {bill.total.toFixed(2)}
+                            ₹ {(bill.total || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
                             {bill.changes || '0.00'}
@@ -216,85 +216,93 @@ const Customers = () => {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [error, setError] = useState(null);
 
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const customerMap = new Map();
-
-      // Try to fetch customers first
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const customersResponse = await api.get('/customers');
-        customersResponse.data.forEach(customer => {
-          customerMap.set(customer._id, {
-            id: customer._id,
-            name: customer.name,
-            contact: customer.contact,
-            aadhar: customer.aadhar || 'N/A',
-            location: customer.location || 'N/A',
-            bills: []
+        setIsLoading(true);
+        setError(null);
+
+        const customerMap = new Map();
+
+        // Try to fetch customers first
+        try {
+          const customersResponse = await api.get('/customers/all');
+          customersResponse.data.forEach(customer => {
+            customerMap.set(customer._id, {
+              id: customer._id?.toString() || 'N/A',
+              name: customer.name || 'Unknown Customer',
+              contact: customer.contact || 'N/A',
+              aadhar: customer.aadhaar || customer.aadhar || 'N/A',
+              location: customer.location || 'N/A',
+              bills: []
+            });
           });
-        });
-      } catch (customersError) {
-        console.warn('Failed to fetch customers directly:', customersError.message);
-        // Continue with bills fetch even if customers API fails
-      }
+        } catch (customersError) {
+          console.warn('Failed to fetch customers directly:', customersError.message);
+        }
 
-      // Then fetch bills
-      try {
-        const billsResponse = await api.get('/bills');
-        billsResponse.data.forEach(bill => {
-          if (bill.customer) {
-            const customerId = bill.customer._id || bill.customer.id;
-            const customerName = bill.customer.name || 'Unknown Customer';
-            const customerContact = bill.customer.contact || 'No contact';
-            const customerAadhar = bill.customer.aadhar || 'N/A';
-            const customerLocation = bill.customer.location || 'N/A';
 
-            if (!customerMap.has(customerId)) {
-              customerMap.set(customerId, {
-                id: customerId,
-                name: customerName,
-                contact: customerContact,
-                aadhar: customerAadhar,
-                location: customerLocation,
-                bills: []
+        // Then fetch bills
+        try {
+          const billsResponse = await api.get('/bills');
+          billsResponse.data.forEach(bill => {
+            if (bill.customer) {
+              const customerId = bill.customer._id || bill.customer.id || 'unknown';
+              const customerName = bill.customer.name || 'Unknown Customer';
+              const customerContact = bill.customer.contact || 'N/A';
+              const customerAadhaar = bill.customer.aadhaar || bill.customer.aadhar || 'N/A';
+              const customerLocation = bill.customer.location || 'N/A';
+
+              if (!customerMap.has(customerId)) {
+                customerMap.set(customerId, {
+                  id: customerId.toString(),
+                  name: customerName,
+                  contact: customerContact,
+                  aadhar: customerAadhaar,
+                  location: customerLocation,
+                  bills: []
+                });
+              }
+
+              // Add bill to customer with proper null checks
+              customerMap.get(customerId).bills.push({
+                _id: bill._id || 'N/A',
+                date: bill.date || new Date().toISOString(),
+                products: bill.products?.map(p => ({
+                  name: p.name || 'Unknown Product',
+                  price: p.price || 0,
+                  quantity: p.quantity || 0
+                })) || [],
+                subtotal: bill.subtotal || 0,
+                total: bill.total || 0,
+                changes: bill.changes || '0.00'
               });
             }
+          });
 
-            // Add bill to customer
-            customerMap.get(customerId).bills.push({
-              ...bill,
-              changes: bill.changes || '0.00'
-            });
-          }
-        });
+          const uniqueCustomers = Array.from(customerMap.values());
+          setCustomers(uniqueCustomers);
+          setFilteredCustomers(uniqueCustomers);
+        } catch (billsError) {
+          throw new Error(`Failed to fetch bills: ${billsError.message}`);
+        }
 
-        const uniqueCustomers = Array.from(customerMap.values());
-        setCustomers(uniqueCustomers);
-        setFilteredCustomers(uniqueCustomers);
-      } catch (billsError) {
-        throw new Error(`Failed to fetch bills: ${billsError.message}`);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     const filtered = customers.filter(customer => {
       const nameMatch = customer.name?.toLowerCase().includes(lowerCaseSearchTerm);
-      const idMatch = customer.id?.toLowerCase().includes(lowerCaseSearchTerm);
+      const idMatch = customer.id?.toString().toLowerCase().includes(lowerCaseSearchTerm);
       const contactMatch = customer.contact?.toLowerCase().includes(lowerCaseSearchTerm);
       const aadharMatch = customer.aadhar?.toLowerCase().includes(lowerCaseSearchTerm);
       return nameMatch || idMatch || contactMatch || aadharMatch;

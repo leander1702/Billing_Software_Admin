@@ -66,17 +66,18 @@ const Dashboard = () => {
       try {
         // Fetch bills data
         const billsResponse = await api.get('/bills');
-        setBills(billsResponse.data);
+        setBills(billsResponse.data || []);
         
         // Process data for dashboard
-        processDashboardData(billsResponse.data);
+        processDashboardData(billsResponse.data || []);
         
         // Fetch low stock products from your API
         const stockResponse = await api.get('/stock-summary');
-        const lowStockItems = stockResponse.data.filter(item => item.currentStock < 10);
+        const stockData = stockResponse.data || [];
+        const lowStockItems = stockData.filter(item => item.currentStock < 10);
         setLowStockAlerts(lowStockItems.map(item => ({
-          productName: item.productName,
-          currentStock: item.currentStock
+          productName: item.productName || 'Unknown Product',
+          currentStock: item.currentStock || 0
         })));
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -89,15 +90,21 @@ const Dashboard = () => {
   }, []);
 
   const processDashboardData = (billsData) => {
-    const allProducts = billsData.flatMap(bill => bill.products);
+    if (!billsData || !Array.isArray(billsData)) return;
+
+    const allProducts = billsData.flatMap(bill => bill.products || []);
     const productSales = {};
 
     allProducts.forEach(product => {
+      if (!product) return;
+      const productName = product.name || 'Unknown Product';
+      const quantity = product.quantity || 0;
+
       // For sales calculation
-      if (!productSales[product.name]) {
-        productSales[product.name] = product.quantity;
+      if (!productSales[productName]) {
+        productSales[productName] = quantity;
       } else {
-        productSales[product.name] += product.quantity;
+        productSales[productName] += quantity;
       }
     });
 
@@ -118,22 +125,25 @@ const Dashboard = () => {
     // Monthly Revenue
     const monthlyRev = {};
     billsData.forEach(bill => {
+      if (!bill || !bill.date) return;
       const month = new Date(bill.date).getMonth();
+      const total = bill.total || 0;
+      
       if (!monthlyRev[month]) {
-        monthlyRev[month] = bill.total;
+        monthlyRev[month] = total;
       } else {
-        monthlyRev[month] += bill.total;
+        monthlyRev[month] += total;
       }
     });
     setMonthlyRevenue(monthlyRev);
   };
 
-  // Calculate summary metrics
-  const totalBills = bills.length;
-  const totalRevenue = bills.reduce((sum, bill) => sum + bill.total, 0);
-  const uniqueCustomers = new Set(bills.map(bill => bill.customer.id)).size;
-  const allProductsInBills = bills.flatMap(bill => bill.products);
-  const totalProductsInStock = allProductsInBills.reduce((sum, product) => sum + product.quantity, 0);
+  // Calculate summary metrics with fallback values
+  const totalBills = bills.length || 0;
+  const totalRevenue = bills.reduce((sum, bill) => sum + (bill?.total || 0), 0);
+  const uniqueCustomers = new Set(bills.map(bill => bill?.customer?.id).filter(Boolean)).size;
+  const allProductsInBills = bills.flatMap(bill => bill?.products || []);
+  const totalProductsInStock = allProductsInBills.reduce((sum, product) => sum + (product?.quantity || 0), 0);
 
   // Prepare chart data for Monthly Revenue
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -232,10 +242,10 @@ const Dashboard = () => {
 
   // Prepare chart data for Product Sales (Pie Chart)
   const getProductChartData = (products) => ({
-    labels: products.map(p => p.name),
+    labels: products.map(p => p?.name || 'Unknown'),
     datasets: [
       {
-        data: products.map(p => p.sales),
+        data: products.map(p => p?.sales || 0),
         backgroundColor: [
           '#3B82F6',
           '#60A5FA',
@@ -294,27 +304,38 @@ const Dashboard = () => {
     }
   };
 
-  // Filter customers for the table
+  // Filter customers for the table with proper null checks
   const customers = bills.reduce((acc, bill) => {
-    const existingCustomer = acc.find(c => c.id === bill.customer.id);
+    if (!bill || !bill.customer) return acc;
+    
+    const customerId = bill.customer.id;
+    const existingCustomer = acc.find(c => c.id === customerId);
+    
     if (!existingCustomer) {
       acc.push({
-        id: bill.customer.id,
-        name: bill.customer.name,
-        totalSpent: bill.total,
-        lastVisit: bill.date,
+        id: customerId,
+        name: bill.customer.name || 'Unknown Customer',
+        totalSpent: bill.total || 0,
+        lastVisit: bill.date || new Date().toISOString(),
       });
     } else {
-      existingCustomer.totalSpent += bill.total;
-      if (new Date(bill.date) > new Date(existingCustomer.lastVisit)) {
+      existingCustomer.totalSpent += bill.total || 0;
+      const billDate = bill.date ? new Date(bill.date) : new Date(0);
+      const lastVisitDate = existingCustomer.lastVisit ? new Date(existingCustomer.lastVisit) : new Date(0);
+      
+      if (billDate > lastVisitDate) {
         existingCustomer.lastVisit = bill.date;
       }
     }
     return acc;
-  }, []).sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit));
+  }, []).sort((a, b) => {
+    const dateA = a.lastVisit ? new Date(a.lastVisit) : new Date(0);
+    const dateB = b.lastVisit ? new Date(b.lastVisit) : new Date(0);
+    return dateB - dateA;
+  });
 
   const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -568,16 +589,16 @@ const Dashboard = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-100">
                         {filteredCustomers.slice(0, 5).map((customer, index) => (
-                          <tr key={customer.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <tr key={customer.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                              <div className="text-sm font-medium text-gray-900">{customer.name || 'Unknown Customer'}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-800">₹{customer.totalSpent.toLocaleString()}</div>
+                              <div className="text-sm text-gray-800">₹{(customer.totalSpent || 0).toLocaleString()}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-600">
-                                {new Date(customer.lastVisit).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                {customer.lastVisit ? new Date(customer.lastVisit).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                               </div>
                             </td>
                           </tr>

@@ -57,10 +57,10 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiDollarSign, label: 'Stock Summary' },
     { icon: GiProfit, label: 'ProfitReport' },
     { icon: GiExpense, label: 'Expense Menu' },
-    { icon: FiPieChart, label: 'Reports' },
-    { icon: FiSettings, label: 'Settings' },
+    // { icon: FiPieChart, label: 'Reports' },
+    // { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },
-    { icon: FiCloud, label: 'Backup / Sync' }
+    // { icon: FiCloud, label: 'Backup / Sync' }
   ];
 
   const handleLogout = () => {

@@ -62,8 +62,8 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
     const updateData = {
       newStockAdded: newStockQty,
       previousStock: currentStock,
-      supplierName: formData.supplierName || 'N/A',
-      batchNumber: formData.batchNumber || 'N/A',
+      supplierName: formData.supplierName ,
+      batchNumber: formData.batchNumber ,
       manufactureDate: formData.manufactureDate || undefined,
       expiryDate: formData.expiryDate || undefined,
       mrp: parseFloat(formData.mrp) || 0,

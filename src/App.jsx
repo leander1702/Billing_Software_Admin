@@ -17,6 +17,7 @@ import BillingInvoices from './Component/Pages/BillingInvoices';
 import { ToastContainer } from 'react-toastify';
 import ProfitReport from './Component/Pages/ProfitReport';
 import SellerExpenseList from './Component/Pages/SellerExpenseList';
+import SellerBills from './Component/Pages/SellerBills';
 
 
 const MainLayout = ({ activePage, setActivePage }) => (
@@ -35,6 +36,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'ProfitReport' && <ProfitReport />}
         {activePage === 'Expense Menu' && <SellerExpenseList />}
         {activePage === 'Admin Management' && <AdminProfile />}
+        {activePage === 'Seller Bills' && <SellerBills />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>
     </div>

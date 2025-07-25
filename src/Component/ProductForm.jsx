@@ -138,16 +138,28 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         setUniqueCategories(storedCategories);
     }, []);
 
+    const formatSupplierName = (name) => {
+        return name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        // Special handling for supplierName to capitalize first letter and lowercase the rest
+        let processedValue = value;
+        if (name === 'supplierName' || name === 'manufactureLocation') {
+            processedValue = formatSupplierName(value);
+        }
 
         // Special handling for numeric fields to remove leading zeros
         const numericFields = [
             'mrp', 'discount', 'gst', 'sgst', 'stockQuantity', 
             'conversionRate', 'sellerPrice', 'mrpPrice', 'quantity'
         ];
-        
-        let processedValue = value;
         
         if (numericFields.includes(name)) {
             // Remove leading zeros when user starts typing

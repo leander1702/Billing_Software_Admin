@@ -18,6 +18,7 @@ import { ToastContainer } from 'react-toastify';
 import ProfitReport from './Component/Pages/ProfitReport';
 import SellerExpenseList from './Component/Pages/SellerExpenseList';
 import CreditDue from './Component/Pages/CreditDue';
+import BillingReports from './Component/Pages/BillingReports';
 
 
 const MainLayout = ({ activePage, setActivePage }) => (
@@ -36,6 +37,7 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'Stock Summary' && <StockDashboard />}
         {activePage === 'ProfitReport' && <ProfitReport />}
         {activePage === 'Expense Menu' && <SellerExpenseList />}
+        {activePage === 'Billing Reports' && <BillingReports/>}
         {activePage === 'Admin Management' && <AdminProfile />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>

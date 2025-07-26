@@ -5,8 +5,22 @@ import api from '../../service/api';
 const CustomerHistoryModal = ({ customer, onClose }) => {
   if (!customer) return null;
 
-  // Calculate total payment amount with null checks
-  const totalPaymentAmount = customer.bills.reduce((sum, bill) => sum + (bill.total || 0), 0);
+  // Calculate payment summary
+  const paymentSummary = customer.bills.reduce(
+    (summary, bill) => {
+      const total = bill.total || 0;
+      const paid = bill.paid || 0;
+      const pending = total - paid;
+      
+      return {
+        grandTotal: summary.grandTotal + total,
+        totalPaid: summary.totalPaid + paid,
+        totalPending: summary.totalPending + (pending > 0 ? pending : 0),
+        totalBills: summary.totalBills + 1
+      };
+    },
+    { grandTotal: 0, totalPaid: 0, totalPending: 0, totalBills: 0 }
+  );
 
   // Function to handle printing
   const handlePrint = () => {
@@ -96,16 +110,30 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Total Bills:</span>
-                    <span className="text-sm font-medium text-gray-900">{customer.bills.length}</span>
+                    <span className="text-sm font-medium text-gray-900">{paymentSummary.totalBills}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Total Amount Spent:</span>
-                    <span className="text-sm font-medium text-gray-900">₹ {totalPaymentAmount.toFixed(2)}</span>
+                    <span className="text-sm text-gray-500">Grand Total:</span>
+                    <span className="text-sm font-medium text-gray-900">₹ {paymentSummary.grandTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Total Paid:</span>
+                    <span className="text-sm font-medium text-gray-900">₹ {paymentSummary.totalPaid.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Pending Amount:</span>
+                    <span className={`text-sm font-medium ${
+                      paymentSummary.totalPending > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      ₹ {paymentSummary.totalPending.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Average Bill Value:</span>
                     <span className="text-sm font-medium text-gray-900">
-                      ₹ {customer.bills.length > 0 ? (totalPaymentAmount / customer.bills.length).toFixed(2) : '0.00'}
+                      ₹ {paymentSummary.totalBills > 0 
+                        ? (paymentSummary.grandTotal / paymentSummary.totalBills).toFixed(2) 
+                        : '0.00'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -139,14 +167,17 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Changes</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {customer.bills.map((bill) => {
-                        // Calculate subtotal if not provided
                         const subtotal = bill.subtotal || 
                           (bill.products?.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0)), 0) || 0);
+                        const paid = bill.paid || 0;
+                        const pending = (bill.total || 0) - paid;
                         
                         return (
                           <tr key={bill._id}>
@@ -178,6 +209,14 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                               ₹ {(bill.total || 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-green-600">
+                              ₹ {paid.toFixed(2)}
+                            </td>
+                            <td className={`px-4 py-3 whitespace-nowrap text-right text-sm ${
+                              pending > 0 ? 'text-red-600' : 'text-gray-500'
+                            }`}>
+                              ₹ {pending > 0 ? pending.toFixed(2) : '0.00'}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
                               {bill.changes || '0.00'}
@@ -280,6 +319,7 @@ const Customers = () => {
                 })) || [],
                 subtotal: bill.subtotal || 0,
                 total: bill.total || 0,
+                paid: bill.paid || 0,
                 changes: bill.changes || '0.00'
               });
             }
@@ -413,43 +453,59 @@ const Customers = () => {
                       Total Purchases
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Pending Amount
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
-                            {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
+                  {filteredCustomers.map((customer) => {
+                    // Calculate pending amount for each customer
+                    const pendingAmount = customer.bills.reduce(
+                      (sum, bill) => sum + ((bill.total || 0) - (bill.paid || 0)), 
+                      0
+                    );
+                    
+                    return (
+                      <tr key={customer.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
+                              {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                              <div className="text-xs text-gray-500">{customer.location}</div>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                            <div className="text-xs text-gray-500">{customer.location}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {customer.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {customer.contact}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {customer.bills.length} {customer.bills.length === 1 ? 'purchase' : 'purchases'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openCustomerHistory(customer)}
-                          className="text-blue-600 hover:text-blue-900 font-semibold transition-colors duration-200"
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.contact}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.bills.length} {customer.bills.length === 1 ? 'purchase' : 'purchases'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <span className={pendingAmount > 0 ? 'text-red-600' : 'text-green-600'}>
+                            ₹ {pendingAmount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => openCustomerHistory(customer)}
+                            className="text-blue-600 hover:text-blue-900 font-semibold transition-colors duration-200"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

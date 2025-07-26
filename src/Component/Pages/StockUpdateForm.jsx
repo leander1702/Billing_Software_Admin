@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../service/api';
+import { toast } from 'react-toastify';
 
 const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -39,64 +40,55 @@ const StockUpdateForm = ({ product, onUpdate, onCancel }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setIsSubmitting(true);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
+  setIsSubmitting(true);
 
-        try {
-            if (!formData.stockQuantity) {
-                throw new Error('Please fill all required fields (Stock Qty, Supplier Name, Batch Number)');
-            }
+  try {
+    if (!formData.stockQuantity) {
+      throw new Error('Please fill all required fields');
+    }
 
-            if (!product?.productCode) {
-                throw new Error('Product information is incomplete');
-            }
+    if (!product?.productCode) {
+      throw new Error('Product information is incomplete');
+    }
 
-            const newStockQty = parseFloat(formData.stockQuantity);
-            const updatedStock = parseFloat(currentStock) + newStockQty;
+    const newStockQty = parseFloat(formData.stockQuantity);
+    if (newStockQty <= 0) {
+      throw new Error('Stock quantity must be greater than 0');
+    }
 
-            const updateData = {
-                incomingDate: formData.incomingDate,
-                newStockAdded: newStockQty,
-                supplierName: formData.supplierName,
-                batchNumber: formData.batchNumber,
-                manufactureDate: formData.manufactureDate || undefined,
-                expiryDate: formData.expiryDate || undefined,
-                mrp: parseFloat(formData.mrp) || 0,
-                sellerPrice: parseFloat(formData.sellerPrice) || 0,
-                currentStock: updatedStock,
-                previousStock: currentStock,
-                productCode: product.productCode,
-                productName: product.productName,
-                baseUnit: product.baseUnit,
-                secondaryUnit: product.secondaryUnit,
-                conversionRate: product.conversionRate
-            };
-
-            const response = await api.put(
-                `/products/stock/${product.productCode}`,
-                updateData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                }
-            );
-
-            onUpdate(response.data);
-
-        } catch (error) {
-            console.error('Stock update error:', error);
-            const errorMessage = error.response?.data?.message ||
-                error.message ||
-                'Failed to update stock. Please try again.';
-            setError(errorMessage);
-        } finally {
-            setIsSubmitting(false);
-        }
+    const updateData = {
+      newStockAdded: newStockQty,
+      previousStock: currentStock,
+      supplierName: formData.supplierName ,
+      batchNumber: formData.batchNumber ,
+      manufactureDate: formData.manufactureDate || undefined,
+      expiryDate: formData.expiryDate || undefined,
+      mrp: parseFloat(formData.mrp) || 0,
+      sellerPrice: parseFloat(formData.sellerPrice) || 0
     };
+
+    const response = await api.put(
+      `/products/stock/${product.productCode}`,
+      updateData
+    );
+
+    toast.success('Stock updated successfully!');
+    onUpdate(response.data.product, response.data.stock);
+
+  } catch (error) {
+    console.error('Stock update error:', error);
+    const errorMessage = error.response?.data?.message ||
+      error.message ||
+      'Failed to update stock. Please try again.';
+    setError(errorMessage);
+    toast.error(errorMessage);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

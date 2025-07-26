@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../service/api';
+import Swal from 'sweetalert2';
 
 const SellerExpenseList = () => {
     const [sellerData, setSellerData] = useState([]);
@@ -12,6 +13,11 @@ const SellerExpenseList = () => {
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [paymentStatus, setPaymentStatus] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [currentSellerKey, setCurrentSellerKey] = useState('');
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentNotes, setPaymentNotes] = useState('');
+    const [paymentHistory, setPaymentHistory] = useState({});
     const itemsPerPage = 10;
 
     const navigate = useNavigate();
@@ -38,8 +44,38 @@ const SellerExpenseList = () => {
             setPaymentStatus(JSON.parse(savedPaymentStatus));
         }
 
+        const savedPaymentHistory = localStorage.getItem('sellerPaymentHistory');
+        if (savedPaymentHistory) {
+            setPaymentHistory(JSON.parse(savedPaymentHistory));
+        }
+
         fetchSellerExpenses();
     }, [dateRange]);
+
+    useEffect(() => {
+        // When seller data changes, update payment status for any changed totals
+        const updatedStatus = { ...paymentStatus };
+        let needsUpdate = false;
+
+        sellerData.forEach(sellerGroup => {
+            const sellerKey = `${sellerGroup.supplierName}-${sellerGroup.batchNumber}`;
+            const currentTotal = parseFloat(calculateTotalAmount(sellerGroup.products));
+            
+            if (updatedStatus[sellerKey] && updatedStatus[sellerKey].totalAmount !== currentTotal) {
+                updatedStatus[sellerKey] = {
+                    ...updatedStatus[sellerKey],
+                    balanceAmount: currentTotal - updatedStatus[sellerKey].paidAmount,
+                    totalAmount: currentTotal
+                };
+                needsUpdate = true;
+            }
+        });
+
+        if (needsUpdate) {
+            setPaymentStatus(updatedStatus);
+            localStorage.setItem('sellerPaymentStatus', JSON.stringify(updatedStatus));
+        }
+    }, [sellerData]);
 
     const toggleSellerDetails = (sellerKey) => {
         setExpandedSellers(prev => ({
@@ -95,22 +131,133 @@ const SellerExpenseList = () => {
         }, 0).toFixed(2);
     };
 
-    const markAsPaid = (sellerKey) => {
-        const newStatus = { ...paymentStatus, [sellerKey]: true };
-        setPaymentStatus(newStatus);
-        localStorage.setItem('sellerPaymentStatus', JSON.stringify(newStatus));
+    const openPaymentModal = (sellerKey) => {
+        setCurrentSellerKey(sellerKey);
+        const sellerPayment = paymentStatus[sellerKey] || {};
+        setPaymentAmount('');
+        setPaymentNotes('');
+        setShowPaymentModal(true);
+    };
+
+   const handlePaymentSubmit = () => {
+    if (!currentSellerKey) return;
+
+    const seller = filteredSellers.find(seller => 
+        `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+    );
+    
+    if (!seller) return;
+
+    const totalAmount = parseFloat(calculateTotalAmount(seller.products));
+    const paidAmount = parseFloat(paymentAmount) || 0;
+    
+    if (paidAmount <= 0) {
+        Swal.fire('Error', 'Payment amount must be greater than 0', 'error');
+        return;
+    }
+
+    const existingPayment = paymentStatus[currentSellerKey] || {
+        paidAmount: 0,
+        balanceAmount: totalAmount,
+        payments: []
+    };
+
+    // Calculate maximum allowed payment
+    const maxAllowedPayment = existingPayment.balanceAmount;
+    
+    if (paidAmount > maxAllowedPayment) {
+        Swal.fire('Error', `Payment amount cannot exceed the balance of ${formatCurrency(maxAllowedPayment)}`, 'error');
+        return;
+    }
+
+    const newPaidAmount = existingPayment.paidAmount + paidAmount;
+    const newBalanceAmount = totalAmount - newPaidAmount;
+    const isFullyPaid = newBalanceAmount <= 0;
+
+    const paymentRecord = {
+        amount: paidAmount,
+        date: new Date().toISOString(),
+        notes: paymentNotes
+    };
+
+    const newStatus = { 
+        ...paymentStatus, 
+        [currentSellerKey]: {
+            isPaid: isFullyPaid,
+            paidAmount: newPaidAmount,
+            balanceAmount: newBalanceAmount,
+            lastPaymentDate: new Date().toISOString(),
+            payments: [...(existingPayment.payments || []), paymentRecord],
+            totalAmount: totalAmount
+        }
+    };
+
+    const newPaymentHistory = {
+        ...paymentHistory,
+        [currentSellerKey]: [
+            ...(paymentHistory[currentSellerKey] || []),
+            paymentRecord
+        ]
+    };
+
+    setPaymentStatus(newStatus);
+    setPaymentHistory(newPaymentHistory);
+    localStorage.setItem('sellerPaymentStatus', JSON.stringify(newStatus));
+    localStorage.setItem('sellerPaymentHistory', JSON.stringify(newPaymentHistory));
+    setShowPaymentModal(false);
+
+    Swal.fire(
+        'Payment Recorded',
+        `Payment of ₹${paidAmount.toFixed(2)} has been recorded. ${isFullyPaid ? 'Full payment completed.' : `Balance: ₹${newBalanceAmount.toFixed(2)}`}`,
+        'success'
+    );
+};
+
+    const handleUnpaid = (sellerKey) => {
+        Swal.fire({
+            title: 'Confirm Unpaid Status',
+            text: 'Are you sure you want to mark this seller as unpaid? This will reset all payment records.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, mark as unpaid'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const newStatus = { ...paymentStatus };
+                delete newStatus[sellerKey];
+                setPaymentStatus(newStatus);
+                localStorage.setItem('sellerPaymentStatus', JSON.stringify(newStatus));
+
+                const newHistory = { ...paymentHistory };
+                delete newHistory[sellerKey];
+                setPaymentHistory(newHistory);
+                localStorage.setItem('sellerPaymentHistory', JSON.stringify(newHistory));
+
+                Swal.fire(
+                    'Marked as Unpaid',
+                    'The seller has been marked as unpaid and payment records have been cleared.',
+                    'success'
+                );
+            }
+        });
     };
 
     const exportToCSV = () => {
         const headers = [
             'Supplier Name', 'Batch Number', 'Product Code', 'Product Name',
-            'Quantity', 'Unit', 'Cost Price', 'MRP', 'Profit', 'Added Date'
+            'Quantity', 'Unit', 'Cost Price', 'MRP', 'Profit', 'Added Date', 
+            'Payment Status', 'Paid Amount', 'Balance Amount', 'Payment History'
         ];
 
         const csvData = [
             headers.join(','),
-            ...filteredSellers.flatMap(seller =>
-                seller.products.map(product => [
+            ...filteredSellers.flatMap(seller => {
+                const sellerKey = `${seller.supplierName}-${seller.batchNumber}`;
+                const payment = paymentStatus[sellerKey] || {};
+                const history = paymentHistory[sellerKey] || [];
+                
+                return seller.products.map(product => [
                     `"${seller.supplierName}"`,
                     `"${seller.batchNumber}"`,
                     `"${product.productCode}"`,
@@ -120,7 +267,13 @@ const SellerExpenseList = () => {
                     product.sellerPrice,
                     product.mrp,
                     (product.mrp - product.sellerPrice) * product.addedStock,
-                    `"${formatDate(product.createdAt)}"`].join(',')).join('\n'))];
+                    `"${formatDate(product.createdAt)}"`,
+                    payment.isPaid ? 'Paid' : payment.paidAmount ? `Partially Paid (${payment.paidAmount})` : 'Unpaid',
+                    payment.paidAmount || 0,
+                    payment.balanceAmount || calculateTotalAmount(seller.products),
+                    `"${history.map(p => `${formatDate(p.date)}: ₹${p.amount}${p.notes ? ` (${p.notes})` : ''}`).join('; ')}"`
+                ].join(','));
+            }).join('\n')];
 
         const blob = new Blob([csvData], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -185,6 +338,26 @@ const SellerExpenseList = () => {
         });
     };
 
+    const formatDateTime = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 2
+        }).format(amount);
+    };
+
     if (loading) return <LoadingSkeleton />;
 
     if (error) {
@@ -198,6 +371,124 @@ const SellerExpenseList = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            {/* Payment Modal */}
+            {showPaymentModal && (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">Record Payment</h3>
+            
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Total Amount: 
+                    <span className="ml-2 font-semibold">
+                        {formatCurrency(
+                            calculateTotalAmount(
+                                filteredSellers.find(seller => 
+                                    `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                                ).products)
+                            )
+                        }
+                    </span>
+                </label>
+            </div>
+
+            {paymentStatus[currentSellerKey]?.paidAmount > 0 && (
+                <div className="mb-3 p-3 bg-blue-50 rounded-md dark:bg-blue-900/30">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Already Paid: {formatCurrency(paymentStatus[currentSellerKey].paidAmount)}
+                    </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Balance: {formatCurrency(paymentStatus[currentSellerKey].balanceAmount)}
+                    </p>
+                </div>
+            )}
+            
+            <div className="mb-4">
+                <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Amount to Pay
+                </label>
+                <input
+                    type="number"
+                    id="paymentAmount"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={paymentAmount}
+                    onChange={(e) => {
+                        const maxAmount = paymentStatus[currentSellerKey]?.balanceAmount || 
+                            calculateTotalAmount(
+                                filteredSellers.find(seller => 
+                                    `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                                ).products
+                            );
+                        const enteredAmount = parseFloat(e.target.value);
+                        
+                        if (enteredAmount > maxAmount) {
+                            // Don't allow values greater than the balance
+                            setPaymentAmount(maxAmount);
+                        } else if (e.target.value === '') {
+                            // Allow empty field
+                            setPaymentAmount('');
+                        } else if (!isNaN(enteredAmount)) {
+                            // Only set if it's a valid number
+                            setPaymentAmount(enteredAmount);
+                        }
+                    }}
+                    placeholder="Enter amount"
+                    max={paymentStatus[currentSellerKey]?.balanceAmount || 
+                        calculateTotalAmount(
+                            filteredSellers.find(seller => 
+                                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                            ).products
+                        )}
+                />
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                    Maximum payable: {formatCurrency(
+                        paymentStatus[currentSellerKey]?.balanceAmount || 
+                        calculateTotalAmount(
+                            filteredSellers.find(seller => 
+                                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                            ).products
+                        )
+                    )}
+                </p>
+            </div>
+            
+            <div className="mb-4">
+                <label htmlFor="paymentNotes" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Notes (Optional)
+                </label>
+                <textarea
+                    id="paymentNotes"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={paymentNotes}
+                    onChange={(e) => setPaymentNotes(e.target.value)}
+                    rows="3"
+                    placeholder="Payment reference or notes..."
+                />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+                <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 dark:text-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handlePaymentSubmit}
+                    disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                    className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        !paymentAmount || parseFloat(paymentAmount) <= 0 
+                            ? 'bg-blue-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                >
+                    Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4 md:mb-0">Seller Expense Management</h1>
 
@@ -272,6 +563,14 @@ const SellerExpenseList = () => {
                         const isExpanded = expandedSellers[sellerKey];
                         const totalAmount = calculateTotalAmount(sellerGroup.products);
                         const totalProfit = calculateTotalProfit(sellerGroup.products);
+                        const paymentInfo = paymentStatus[sellerKey] || {};
+                        const history = paymentHistory[sellerKey] || [];
+                        const currentTotalAmount = parseFloat(totalAmount);
+                        
+                        // Calculate balance based on current total amount and payments made
+                        const balanceAmount = paymentInfo.totalAmount !== undefined && paymentInfo.totalAmount !== currentTotalAmount
+                            ? currentTotalAmount - (paymentInfo.paidAmount || 0)
+                            : paymentInfo.balanceAmount || (currentTotalAmount - (paymentInfo.paidAmount || 0));
 
                         return (
                             <div key={sellerKey} className="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800 dark:border dark:border-gray-700">
@@ -439,19 +738,84 @@ const SellerExpenseList = () => {
                                                 </tfoot>
                                             </table>
                                         </div>
+
+                                        {/* Payment History Section */}
+                                        {history.length > 0 && (
+                                            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                                                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Payment History</h4>
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                                        <thead className="bg-gray-50 dark:bg-gray-700">
+                                                            <tr>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                                                            {history.map((payment, index) => (
+                                                                <tr key={index}>
+                                                                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                                                                        {formatDateTime(payment.date)}
+                                                                    </td>
+                                                                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                                                                        ₹{payment.amount.toFixed(2)}
+                                                                    </td>
+                                                                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                                                                        {payment.notes || '-'}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                GST: {sellerGroup.gstCategory || 'Non-GST'}
+                                                {/* GST: {sellerGroup.gstCategory} */}
+                                                {balanceAmount > 0 && (
+                                                    <span className="ml-4 text-red-600 dark:text-red-400">
+                                                        Balance: ₹{Math.max(balanceAmount, 0).toFixed(2)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <button
-                                                className={`px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${paymentStatus[sellerKey]
-                                                        ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                                                        : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                                                    }`}
-                                                onClick={() => markAsPaid(sellerKey)}
-                                            >
-                                                {paymentStatus[sellerKey] ? 'Paid' : 'Mark as Paid'}
-                                            </button>
+                                            <div className="flex space-x-2">
+                                                {paymentInfo.isPaid ? (
+                                                    <>
+                                                        <button
+                                                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md"
+                                                            disabled
+                                                        >
+                                                            Paid
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUnpaid(sellerKey)}
+                                                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
+                                                        >
+                                                            Mark as Unpaid
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                            onClick={() => openPaymentModal(sellerKey)}
+                                                        >
+                                                            {paymentInfo.paidAmount ? 'Add Payment' : 'Make Payment'}
+                                                        </button>
+                                                        {paymentInfo.paidAmount && (
+                                                            <button
+                                                                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                                disabled
+                                                            >
+                                                                Partially Paid
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

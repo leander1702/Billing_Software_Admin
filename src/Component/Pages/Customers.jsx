@@ -247,6 +247,7 @@ const Customers = () => {
           console.warn('Failed to fetch customers directly:', customersError.message);
         }
 
+
         // Then fetch bills
         try {
           const billsResponse = await api.get('/bills');

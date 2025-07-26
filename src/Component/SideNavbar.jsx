@@ -52,6 +52,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiHome, label: 'Dashboard' },
     { icon: FiCreditCard, label: 'Billing / Invoices' },
     { icon: FiUsers, label: 'Customers' },
+    { icon: FiCloud, label: 'Credit Dues' },
     { icon: FiPackage, label: 'Products' },
     { icon: FiArchive, label: 'Product Stock List' },
     { icon: FiDollarSign, label: 'Stock Summary' },
@@ -60,7 +61,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiPieChart, label: 'Seller Bills' },
     // { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },
-    // { icon: FiCloud, label: 'Backup / Sync' }
+
   ];
 
   const handleLogout = () => {
@@ -70,7 +71,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
 
   return (
     <aside className={`relative flex flex-col bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-200 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
-      
+
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto mt-2">
         <ul className="space-y-2 px-3 py-2">

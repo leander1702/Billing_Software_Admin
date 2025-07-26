@@ -139,71 +139,79 @@ const SellerExpenseList = () => {
         setShowPaymentModal(true);
     };
 
-    const handlePaymentSubmit = () => {
-        if (!currentSellerKey) return;
+   const handlePaymentSubmit = () => {
+    if (!currentSellerKey) return;
 
-        const seller = filteredSellers.find(seller => 
-            `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
-        );
-        
-        if (!seller) return;
+    const seller = filteredSellers.find(seller => 
+        `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+    );
+    
+    if (!seller) return;
 
-        const totalAmount = parseFloat(calculateTotalAmount(seller.products));
-        const paidAmount = parseFloat(paymentAmount) || 0;
-        
-        if (paidAmount <= 0) {
-            Swal.fire('Error', 'Payment amount must be greater than 0', 'error');
-            return;
-        }
+    const totalAmount = parseFloat(calculateTotalAmount(seller.products));
+    const paidAmount = parseFloat(paymentAmount) || 0;
+    
+    if (paidAmount <= 0) {
+        Swal.fire('Error', 'Payment amount must be greater than 0', 'error');
+        return;
+    }
 
-        const existingPayment = paymentStatus[currentSellerKey] || {
-            paidAmount: 0,
-            balanceAmount: totalAmount,
-            payments: []
-        };
-
-        const newPaidAmount = existingPayment.paidAmount + paidAmount;
-        const newBalanceAmount = totalAmount - newPaidAmount;
-        const isFullyPaid = newBalanceAmount <= 0;
-
-        const paymentRecord = {
-            amount: paidAmount,
-            date: new Date().toISOString(),
-            notes: paymentNotes
-        };
-
-        const newStatus = { 
-            ...paymentStatus, 
-            [currentSellerKey]: {
-                isPaid: isFullyPaid,
-                paidAmount: newPaidAmount,
-                balanceAmount: newBalanceAmount,
-                lastPaymentDate: new Date().toISOString(),
-                payments: [...(existingPayment.payments || []), paymentRecord],
-                totalAmount: totalAmount
-            }
-        };
-
-        const newPaymentHistory = {
-            ...paymentHistory,
-            [currentSellerKey]: [
-                ...(paymentHistory[currentSellerKey] || []),
-                paymentRecord
-            ]
-        };
-
-        setPaymentStatus(newStatus);
-        setPaymentHistory(newPaymentHistory);
-        localStorage.setItem('sellerPaymentStatus', JSON.stringify(newStatus));
-        localStorage.setItem('sellerPaymentHistory', JSON.stringify(newPaymentHistory));
-        setShowPaymentModal(false);
-
-        Swal.fire(
-            'Payment Recorded',
-            `Payment of ₹${paidAmount.toFixed(2)} has been recorded. ${isFullyPaid ? 'Full payment completed.' : `Balance: ₹${newBalanceAmount.toFixed(2)}`}`,
-            'success'
-        );
+    const existingPayment = paymentStatus[currentSellerKey] || {
+        paidAmount: 0,
+        balanceAmount: totalAmount,
+        payments: []
     };
+
+    // Calculate maximum allowed payment
+    const maxAllowedPayment = existingPayment.balanceAmount;
+    
+    if (paidAmount > maxAllowedPayment) {
+        Swal.fire('Error', `Payment amount cannot exceed the balance of ${formatCurrency(maxAllowedPayment)}`, 'error');
+        return;
+    }
+
+    const newPaidAmount = existingPayment.paidAmount + paidAmount;
+    const newBalanceAmount = totalAmount - newPaidAmount;
+    const isFullyPaid = newBalanceAmount <= 0;
+
+    const paymentRecord = {
+        amount: paidAmount,
+        date: new Date().toISOString(),
+        notes: paymentNotes
+    };
+
+    const newStatus = { 
+        ...paymentStatus, 
+        [currentSellerKey]: {
+            isPaid: isFullyPaid,
+            paidAmount: newPaidAmount,
+            balanceAmount: newBalanceAmount,
+            lastPaymentDate: new Date().toISOString(),
+            payments: [...(existingPayment.payments || []), paymentRecord],
+            totalAmount: totalAmount
+        }
+    };
+
+    const newPaymentHistory = {
+        ...paymentHistory,
+        [currentSellerKey]: [
+            ...(paymentHistory[currentSellerKey] || []),
+            paymentRecord
+        ]
+    };
+
+    setPaymentStatus(newStatus);
+    setPaymentHistory(newPaymentHistory);
+    localStorage.setItem('sellerPaymentStatus', JSON.stringify(newStatus));
+    localStorage.setItem('sellerPaymentHistory', JSON.stringify(newPaymentHistory));
+    setShowPaymentModal(false);
+
+    Swal.fire(
+        'Payment Recorded',
+        `Payment of ₹${paidAmount.toFixed(2)} has been recorded. ${isFullyPaid ? 'Full payment completed.' : `Balance: ₹${newBalanceAmount.toFixed(2)}`}`,
+        'success'
+    );
+};
 
     const handleUnpaid = (sellerKey) => {
         Swal.fire({

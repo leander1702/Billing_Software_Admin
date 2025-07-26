@@ -52,6 +52,31 @@ const SellerExpenseList = () => {
         fetchSellerExpenses();
     }, [dateRange]);
 
+    useEffect(() => {
+        // When seller data changes, update payment status for any changed totals
+        const updatedStatus = { ...paymentStatus };
+        let needsUpdate = false;
+
+        sellerData.forEach(sellerGroup => {
+            const sellerKey = `${sellerGroup.supplierName}-${sellerGroup.batchNumber}`;
+            const currentTotal = parseFloat(calculateTotalAmount(sellerGroup.products));
+            
+            if (updatedStatus[sellerKey] && updatedStatus[sellerKey].totalAmount !== currentTotal) {
+                updatedStatus[sellerKey] = {
+                    ...updatedStatus[sellerKey],
+                    balanceAmount: currentTotal - updatedStatus[sellerKey].paidAmount,
+                    totalAmount: currentTotal
+                };
+                needsUpdate = true;
+            }
+        });
+
+        if (needsUpdate) {
+            setPaymentStatus(updatedStatus);
+            localStorage.setItem('sellerPaymentStatus', JSON.stringify(updatedStatus));
+        }
+    }, [sellerData]);
+
     const toggleSellerDetails = (sellerKey) => {
         setExpandedSellers(prev => ({
             ...prev,
@@ -117,13 +142,15 @@ const SellerExpenseList = () => {
     const handlePaymentSubmit = () => {
         if (!currentSellerKey) return;
 
-        const totalAmount = parseFloat(calculateTotalAmount(
-            filteredSellers.find(seller => 
-                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
-            ).products
-        ));
+        const seller = filteredSellers.find(seller => 
+            `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+        );
+        
+        if (!seller) return;
 
+        const totalAmount = parseFloat(calculateTotalAmount(seller.products));
         const paidAmount = parseFloat(paymentAmount) || 0;
+        
         if (paidAmount <= 0) {
             Swal.fire('Error', 'Payment amount must be greater than 0', 'error');
             return;
@@ -152,11 +179,11 @@ const SellerExpenseList = () => {
                 paidAmount: newPaidAmount,
                 balanceAmount: newBalanceAmount,
                 lastPaymentDate: new Date().toISOString(),
-                payments: [...(existingPayment.payments || []), paymentRecord]
+                payments: [...(existingPayment.payments || []), paymentRecord],
+                totalAmount: totalAmount
             }
         };
 
-        // Update payment history
         const newPaymentHistory = {
             ...paymentHistory,
             [currentSellerKey]: [
@@ -338,86 +365,121 @@ const SellerExpenseList = () => {
         <div className="container mx-auto px-4 py-8">
             {/* Payment Modal */}
             {showPaymentModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 dark:bg-gray-800">
-                        <h3 className="text-lg font-semibold mb-4 dark:text-white">Record Payment</h3>
-                        
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-                                Total Amount: 
-                                <span className="ml-2 font-semibold">
-                                    {formatCurrency(
-                                        calculateTotalAmount(
-                                            filteredSellers.find(seller => 
-                                                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
-                                            ).products
-                                        )
-                                    )}
-                                </span>
-                            </label>
-                        </div>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">Record Payment</h3>
+            
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Total Amount: 
+                    <span className="ml-2 font-semibold">
+                        {formatCurrency(
+                            calculateTotalAmount(
+                                filteredSellers.find(seller => 
+                                    `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                                ).products)
+                            )
+                        }
+                    </span>
+                </label>
+            </div>
 
-                        {paymentStatus[currentSellerKey]?.paidAmount > 0 && (
-                            <div className="mb-3 p-3 bg-blue-50 rounded-md dark:bg-blue-900/30">
-                                <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    Already Paid: {formatCurrency(paymentStatus[currentSellerKey].paidAmount)}
-                                </p>
-                                <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    Balance: {formatCurrency(paymentStatus[currentSellerKey].balanceAmount)}
-                                </p>
-                            </div>
-                        )}
-                        
-                        <div className="mb-4">
-                            <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-                                Amount to Pay
-                            </label>
-                            <input
-                                type="number"
-                                id="paymentAmount"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                value={paymentAmount}
-                                onChange={(e) => setPaymentAmount(e.target.value)}
-                                placeholder="Enter amount"
-                                max={paymentStatus[currentSellerKey]?.balanceAmount || calculateTotalAmount(
-                                    filteredSellers.find(seller => 
-                                        `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
-                                    ).products
-                                )}
-                            />
-                        </div>
-                        
-                        <div className="mb-4">
-                            <label htmlFor="paymentNotes" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-                                Notes (Optional)
-                            </label>
-                            <textarea
-                                id="paymentNotes"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                value={paymentNotes}
-                                onChange={(e) => setPaymentNotes(e.target.value)}
-                                rows="3"
-                                placeholder="Payment reference or notes..."
-                            />
-                        </div>
-                        
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => setShowPaymentModal(false)}
-                                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 dark:text-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handlePaymentSubmit}
-                                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                Record Payment
-                            </button>
-                        </div>
-                    </div>
+            {paymentStatus[currentSellerKey]?.paidAmount > 0 && (
+                <div className="mb-3 p-3 bg-blue-50 rounded-md dark:bg-blue-900/30">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Already Paid: {formatCurrency(paymentStatus[currentSellerKey].paidAmount)}
+                    </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Balance: {formatCurrency(paymentStatus[currentSellerKey].balanceAmount)}
+                    </p>
                 </div>
             )}
+            
+            <div className="mb-4">
+                <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Amount to Pay
+                </label>
+                <input
+                    type="number"
+                    id="paymentAmount"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={paymentAmount}
+                    onChange={(e) => {
+                        const maxAmount = paymentStatus[currentSellerKey]?.balanceAmount || 
+                            calculateTotalAmount(
+                                filteredSellers.find(seller => 
+                                    `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                                ).products
+                            );
+                        const enteredAmount = parseFloat(e.target.value);
+                        
+                        if (enteredAmount > maxAmount) {
+                            // Don't allow values greater than the balance
+                            setPaymentAmount(maxAmount);
+                        } else if (e.target.value === '') {
+                            // Allow empty field
+                            setPaymentAmount('');
+                        } else if (!isNaN(enteredAmount)) {
+                            // Only set if it's a valid number
+                            setPaymentAmount(enteredAmount);
+                        }
+                    }}
+                    placeholder="Enter amount"
+                    max={paymentStatus[currentSellerKey]?.balanceAmount || 
+                        calculateTotalAmount(
+                            filteredSellers.find(seller => 
+                                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                            ).products
+                        )}
+                />
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                    Maximum payable: {formatCurrency(
+                        paymentStatus[currentSellerKey]?.balanceAmount || 
+                        calculateTotalAmount(
+                            filteredSellers.find(seller => 
+                                `${seller.supplierName}-${seller.batchNumber}` === currentSellerKey
+                            ).products
+                        )
+                    )}
+                </p>
+            </div>
+            
+            <div className="mb-4">
+                <label htmlFor="paymentNotes" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                    Notes (Optional)
+                </label>
+                <textarea
+                    id="paymentNotes"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={paymentNotes}
+                    onChange={(e) => setPaymentNotes(e.target.value)}
+                    rows="3"
+                    placeholder="Payment reference or notes..."
+                />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+                <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 dark:text-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handlePaymentSubmit}
+                    disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                    className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        !paymentAmount || parseFloat(paymentAmount) <= 0 
+                            ? 'bg-blue-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                >
+                    Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+)}
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4 md:mb-0">Seller Expense Management</h1>
@@ -495,6 +557,12 @@ const SellerExpenseList = () => {
                         const totalProfit = calculateTotalProfit(sellerGroup.products);
                         const paymentInfo = paymentStatus[sellerKey] || {};
                         const history = paymentHistory[sellerKey] || [];
+                        const currentTotalAmount = parseFloat(totalAmount);
+                        
+                        // Calculate balance based on current total amount and payments made
+                        const balanceAmount = paymentInfo.totalAmount !== undefined && paymentInfo.totalAmount !== currentTotalAmount
+                            ? currentTotalAmount - (paymentInfo.paidAmount || 0)
+                            : paymentInfo.balanceAmount || (currentTotalAmount - (paymentInfo.paidAmount || 0));
 
                         return (
                             <div key={sellerKey} className="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800 dark:border dark:border-gray-700">
@@ -698,10 +766,10 @@ const SellerExpenseList = () => {
 
                                         <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                GST: {sellerGroup.gstCategory || 'Non-GST'}
-                                                {paymentInfo.balanceAmount > 0 && (
+                                                {/* GST: {sellerGroup.gstCategory} */}
+                                                {balanceAmount > 0 && (
                                                     <span className="ml-4 text-red-600 dark:text-red-400">
-                                                        Balance: ₹{paymentInfo.balanceAmount?.toFixed(2) || (parseFloat(totalAmount) - (paymentInfo.paidAmount || 0)).toFixed(2)}
+                                                        Balance: ₹{Math.max(balanceAmount, 0).toFixed(2)}
                                                     </span>
                                                 )}
                                             </div>

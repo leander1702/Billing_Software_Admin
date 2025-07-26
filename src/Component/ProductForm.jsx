@@ -7,6 +7,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         category: '',
         productName: '',
         productCode: '',
+        hsnCode: '',
         brand: '',
         baseUnit: 'piece',
         secondaryUnit: '',
@@ -15,7 +16,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         discount: '',
         mrpPrice: '',
         netPrice: '',
-        gst:'',
+        gst: '',
         sgst: '',
         totalPrice: '',
         stockQuantity: '',
@@ -103,6 +104,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 category: product.category || '',
                 productName: product.productName || '',
                 productCode: product.productCode || '',
+                hsnCode: product.hsnCode || '',
                 brand: product.brand || '',
                 baseUnit: product.baseUnit || 'piece',
                 secondaryUnit: product.secondaryUnit || '',
@@ -157,10 +159,10 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
 
         // Special handling for numeric fields to remove leading zeros
         const numericFields = [
-            'mrp', 'discount', 'gst', 'sgst', 'stockQuantity', 
+            'mrp', 'discount', 'gst', 'sgst', 'stockQuantity',
             'conversionRate', 'sellerPrice', 'mrpPrice', 'quantity'
         ];
-        
+
         if (numericFields.includes(name)) {
             // Remove leading zeros when user starts typing
             if (value.length > 1 && value.startsWith('0') && !value.startsWith('0.')) {
@@ -181,14 +183,14 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
 
                 // Calculate net price after discount (but don't use it for total price)
                 const netPrice = mrp - (mrp * (discount / 100));
-                
+
                 // Calculate GST amounts (for display purposes only)
                 const gstAmount = mrp * (gst / 100);
                 const sgstAmount = mrp * (sgst / 100);
-                
+
                 // Total price remains the MRP (sales price)
                 const totalPrice = mrp;
-                
+
                 // Calculate profit (seller price is the cost price)
                 const profit = totalPrice - sellerPrice;
 
@@ -282,6 +284,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 manufactureDate: data.manufactureDate || '',
                 manufactureLocation: data.manufactureLocation || '',
                 productCode: data.productCode || barcode,
+                hsnCode: data.hsnCode || '',
                 totalConvertedQty: data.secondaryUnit
                     ? parseFloat(data.stockQuantity || 0) * parseFloat(data.conversionRate || 0)
                     : 0,
@@ -341,6 +344,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     category: '',
                     productName: '',
                     productCode: '',
+                    hsnCode: '',
                     brand: '',
                     baseUnit: 'piece',
                     secondaryUnit: '',
@@ -349,9 +353,9 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     mrpPrice: '0',
                     discount: '0',
                     netPrice: '0',
-                    gst:  '0',
-                    sgst:  '0',
-                    totalPrice:  '0',
+                    gst: '0',
+                    sgst: '0',
+                    totalPrice: '0',
                     stockQuantity: '0',
                     sellerPrice: '0',
                     profit: '0',
@@ -386,7 +390,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 <h3 className="text-md font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
                     Product Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Product Code*</label>
                         <input
@@ -413,6 +417,17 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             required
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Product name"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">HSN Code</label>
+                        <input
+                            type="text"
+                            name="hsnCode"
+                            value={formData.hsnCode}
+                            onChange={handleChange}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="HSN Code"
                         />
                     </div>
 
@@ -525,22 +540,6 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             />
                         </div>
                     </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Profit (₹)</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                                <span className="text-gray-500 text-sm">₹</span>
-                            </div>
-                            <input
-                                type="text"
-                                name="profit"
-                                value={formData.profit}
-                                readOnly
-                                className="w-full pl-7 pr-2 py-1 text-sm bg-gray-50 border border-gray-300 rounded"
-                            />
-                        </div>
-                    </div>
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Sales Price (₹)*</label>
                         <div className="relative">
@@ -565,7 +564,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             </p>
                         )}
                     </div>
-
+{/* 
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
                         <div className="relative">
@@ -583,7 +582,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 <span className="text-gray-500 text-sm">%</span>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* GST Category Dropdown (Aligned Right) */}
                     <div>
@@ -652,6 +651,22 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                                 type="text"
                                 name="totalPrice"
                                 value={formData.totalPrice}
+                                readOnly
+                                className="w-full pl-7 pr-2 py-1 text-sm bg-gray-50 border border-gray-300 rounded"
+                            />
+                        </div>
+                    </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Profit (₹)</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                            </div>
+                            <input
+                                type="text"
+                                name="profit"
+                                value={formData.profit}
                                 readOnly
                                 className="w-full pl-7 pr-2 py-1 text-sm bg-gray-50 border border-gray-300 rounded"
                             />

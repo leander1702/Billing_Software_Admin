@@ -137,48 +137,54 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill ID</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Changes</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {customer.bills.map((bill) => (
-                        <tr key={bill._id}>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {bill._id?.substring(bill._id.length - 6) || 'N/A'}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                            {bill.date ? new Date(bill.date).toLocaleString('en-IN', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true
-                            }) : 'N/A'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
-                            <ul className="list-disc list-inside">
-                              {bill.products?.map((product, pIdx) => (
-                                <li key={pIdx}>
-                                  {product.name || 'Unknown Product'} (x{product.quantity || 0}) 
-                                  {product.price !== undefined && <span className="text-gray-400 ml-1">@ ₹{(product.price || 0).toFixed(2)}</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
-                            ₹ {(bill.subtotal || bill.products?.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0), 0) || 0).toFixed(2))}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            ₹ {(bill.total || 0).toFixed(2)}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
-                            {bill.changes || '0.00'}
-                          </td>
-                        </tr>
-                      ))}
+                      {customer.bills.map((bill) => {
+                        // Calculate subtotal if not provided
+                        const subtotal = bill.subtotal || 
+                          (bill.products?.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0)), 0) || 0);
+                        
+                        return (
+                          <tr key={bill._id}>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {bill._id?.substring(bill._id.length - 6) || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                              {bill.date ? new Date(bill.date).toLocaleString('en-IN', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              }) : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500">
+                              <ul className="list-disc list-inside">
+                                {bill.products?.map((product, pIdx) => (
+                                  <li key={pIdx}>
+                                    {product.name || 'Unknown Product'} (x{product.quantity || 0}) 
+                                    {product.price !== undefined && <span className="text-gray-400 ml-1">@ ₹{(product.price || 0).toFixed(2)}</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
+                              ₹ {subtotal.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                              ₹ {(bill.total || 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
+                              {bill.changes || '0.00'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

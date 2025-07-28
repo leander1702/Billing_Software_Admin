@@ -140,7 +140,7 @@ const Dashboard = () => {
 
   // Calculate summary metrics with fallback values
   const totalBills = bills.length || 0;
-  const totalRevenue = bills.reduce((sum, bill) => sum + (bill?.total || 0), 0);
+  const totalRevenue = bills.reduce((sum, bill) => sum + (bill?.paidAmount|| 0), 0);
   const uniqueCustomers = new Set(bills.map(bill => bill?.customer?.id).filter(Boolean)).size;
   const allProductsInBills = bills.flatMap(bill => bill?.products || []);
   const totalProductsInStock = allProductsInBills.reduce((sum, product) => sum + (product?.quantity || 0), 0);

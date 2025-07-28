@@ -5,13 +5,13 @@ import api from '../../service/api';
 const CustomerHistoryModal = ({ customer, onClose }) => {
   if (!customer) return null;
 
-  // Calculate payment summary
+  // Calculate payment summary with correct property names
   const paymentSummary = customer.bills.reduce(
     (summary, bill) => {
-      const total = bill.total || 0;
-      const paid = bill.paid || 0;
+      const total = bill.grandTotal || bill.total || 0;
+      const paid = bill.paidAmount || bill.paid || 0;
       const pending = total - paid;
-      
+
       return {
         grandTotal: summary.grandTotal + total,
         totalPaid: summary.totalPaid + paid,
@@ -26,7 +26,7 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
   const handlePrint = () => {
     const printContent = document.getElementById('printable-customer-info').innerHTML;
     const originalContent = document.body.innerHTML;
-    
+
     document.body.innerHTML = `
       <div class="print-container" style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 20px;">
@@ -39,7 +39,7 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
         </div>
       </div>
     `;
-    
+
     window.print();
     document.body.innerHTML = originalContent;
     window.location.reload();
@@ -96,8 +96,8 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Customer Since:</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {customer.bills.length > 0 
-                        ? new Date(customer.bills[0].date).toLocaleDateString() 
+                      {customer.bills.length > 0
+                        ? new Date(customer.bills[0].date).toLocaleDateString()
                         : 'N/A'}
                     </span>
                   </div>
@@ -120,31 +120,30 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                     <span className="text-sm text-gray-500">Total Paid:</span>
                     <span className="text-sm font-medium text-gray-900">₹ {paymentSummary.totalPaid.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-center">
                     <span className="text-sm text-gray-500">Pending Amount:</span>
-                    <span className={`text-sm font-medium ${
-                      paymentSummary.totalPending > 0 ? 'text-red-600' : 'text-green-600'
-                    }`}>
+                    <span className={`text-sm font-medium ${paymentSummary.totalPending > 0 ? 'text-red-600' : 'text-green-600'
+                      }`}>
                       ₹ {paymentSummary.totalPending.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Average Bill Value:</span>
                     <span className="text-sm font-medium text-gray-900">
-                      ₹ {paymentSummary.totalBills > 0 
-                        ? (paymentSummary.grandTotal / paymentSummary.totalBills).toFixed(2) 
+                      ₹ {paymentSummary.totalBills > 0
+                        ? (paymentSummary.grandTotal / paymentSummary.totalBills).toFixed(2)
                         : '0.00'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Last Purchase:</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {customer.bills.length > 0 
+                      {customer.bills.length > 0
                         ? new Date(
-                            customer.bills.reduce((latest, bill) => 
-                              new Date(bill.date) > new Date(latest) ? bill.date : latest, 
+                          customer.bills.reduce((latest, bill) =>
+                            new Date(bill.date) > new Date(latest) ? bill.date : latest,
                             customer.bills[0].date)
-                          ).toLocaleDateString()
+                        ).toLocaleDateString()
                         : 'N/A'}
                     </span>
                   </div>
@@ -169,16 +168,17 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Changes</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {customer.bills.map((bill) => {
-                        const subtotal = bill.subtotal || 
+                        const subtotal = bill.productSubtotal ||
                           (bill.products?.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0)), 0) || 0);
-                        const paid = bill.paid || 0;
-                        const pending = (bill.total || 0) - paid;
-                        
+                        const paid = bill.paidAmount || bill.paid || 0;
+                        const pending = (bill.grandTotal || bill.total || 0) - paid;
+                        const paymentMethod = bill.paymentMethod || 'Unknown';
+
                         return (
                           <tr key={bill._id}>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -198,7 +198,7 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                               <ul className="list-disc list-inside">
                                 {bill.products?.map((product, pIdx) => (
                                   <li key={pIdx}>
-                                    {product.name || 'Unknown Product'} (x{product.quantity || 0}) 
+                                    {product.name || 'Unknown Product'} (x{product.quantity || 0})
                                     {product.price !== undefined && <span className="text-gray-400 ml-1">@ ₹{(product.price || 0).toFixed(2)}</span>}
                                   </li>
                                 ))}
@@ -208,18 +208,17 @@ const CustomerHistoryModal = ({ customer, onClose }) => {
                               ₹ {subtotal.toFixed(2)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                              ₹ {(bill.total || 0).toFixed(2)}
+                              ₹ {(bill.grandTotal || bill.total || 0).toFixed(2)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-green-600">
                               ₹ {paid.toFixed(2)}
                             </td>
-                            <td className={`px-4 py-3 whitespace-nowrap text-right text-sm ${
-                              pending > 0 ? 'text-red-600' : 'text-gray-500'
-                            }`}>
+                            <td className={`px-4 py-3 whitespace-nowrap text-right text-sm ${pending > 0 ? 'text-red-600' : 'text-gray-500'
+                              }`}>
                               ₹ {pending > 0 ? pending.toFixed(2) : '0.00'}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
-                              {bill.changes || '0.00'}
+                              {paymentMethod}
                             </td>
                           </tr>
                         );
@@ -261,17 +260,16 @@ const Customers = () => {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const customerMap = new Map();
+
+      // 1. Try to fetch customers with proper error handling
       try {
-        setIsLoading(true);
-        setError(null);
-
-        const customerMap = new Map();
-
-        // Try to fetch customers first
-        try {
-          const customersResponse = await api.get('/customers/all');
+        const customersResponse = await api.get('/customers'); // Changed from '/customers/all'
+        if (customersResponse.data) {
           customersResponse.data.forEach(customer => {
             customerMap.set(customer._id, {
               id: customer._id?.toString() || 'N/A',
@@ -282,35 +280,30 @@ const Customers = () => {
               bills: []
             });
           });
-        } catch (customersError) {
-          console.warn('Failed to fetch customers directly:', customersError.message);
         }
+      } catch (customersError) {
+        console.warn('Failed to fetch customers:', customersError.message);
+        // Continue even if customers fetch fails - we'll try with bills data
+      }
 
-
-        // Then fetch bills
-        try {
-          const billsResponse = await api.get('/bills');
+      // 2. Fetch bills with proper error handling
+      try {
+        const billsResponse = await api.get('/bills');
+        if (billsResponse.data) {
           billsResponse.data.forEach(bill => {
             if (bill.customer) {
               const customerId = bill.customer._id || bill.customer.id || 'unknown';
-              const customerName = bill.customer.name || 'Unknown Customer';
-              const customerContact = bill.customer.contact || 'N/A';
-              const customerAadhaar = bill.customer.aadhaar || bill.customer.aadhar || 'N/A';
-              const customerLocation = bill.customer.location || 'N/A';
-
-              if (!customerMap.has(customerId)) {
-                customerMap.set(customerId, {
-                  id: customerId.toString(),
-                  name: customerName,
-                  contact: customerContact,
-                  aadhar: customerAadhaar,
-                  location: customerLocation,
-                  bills: []
-                });
-              }
+              const customerData = customerMap.get(customerId) || {
+                id: customerId.toString(),
+                name: bill.customer.name || 'Unknown Customer',
+                contact: bill.customer.contact || 'N/A',
+                aadhar: bill.customer.aadhaar || bill.customer.aadhar || 'N/A',
+                location: bill.customer.location || 'N/A',
+                bills: []
+              };
 
               // Add bill to customer with proper null checks
-              customerMap.get(customerId).bills.push({
+              customerData.bills.push({
                 _id: bill._id || 'N/A',
                 date: bill.date || new Date().toISOString(),
                 products: bill.products?.map(p => ({
@@ -318,29 +311,40 @@ const Customers = () => {
                   price: p.price || 0,
                   quantity: p.quantity || 0
                 })) || [],
-                subtotal: bill.subtotal || 0,
-                total: bill.total || 0,
-                paid: bill.paid || 0,
-                changes: bill.changes || '0.00'
+                productSubtotal: bill.productSubtotal || 0,
+                currentBillTotal: bill.currentBillTotal || 0,
+                previousOutstandingCredit: bill.previousOutstandingCredit || 0,
+                grandTotal: bill.grandTotal || 0,
+                paidAmount: bill.paidAmount || 0,
+                unpaidAmountForThisBill: bill.unpaidAmountForThisBill || 0,
+                paymentMethod: bill.paymentMethod || 'Unknown'
               });
+
+              customerMap.set(customerId, customerData);
             }
           });
-
-          const uniqueCustomers = Array.from(customerMap.values());
-          setCustomers(uniqueCustomers);
-          setFilteredCustomers(uniqueCustomers);
-        } catch (billsError) {
-          throw new Error(`Failed to fetch bills: ${billsError.message}`);
         }
-
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+      } catch (billsError) {
+        console.error('Failed to fetch bills:', billsError.message);
+        if (customerMap.size === 0) {
+          // Only throw error if we couldn't get any data
+          throw new Error('Failed to fetch both customers and bills data');
+        }
       }
-    };
 
+      const uniqueCustomers = Array.from(customerMap.values());
+      setCustomers(uniqueCustomers);
+      setFilteredCustomers(uniqueCustomers);
+
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Failed to load customer data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -409,7 +413,7 @@ const Customers = () => {
             </div>
 
             <div className="text-sm text-gray-600 pl-1 sm:pl-0">
-              {filteredCustomers.length} {filteredCustomers.length === 1 ? 'customer' : 'customers'} 
+              {filteredCustomers.length} {filteredCustomers.length === 1 ? 'customer' : 'customers'}
             </div>
           </div>
         </div>
@@ -441,62 +445,69 @@ const Customers = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Customer Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Customer ID
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Total Purchases
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Pending Amount
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-white divide-y divide-gray-100 text-center">
                   {filteredCustomers.map((customer) => {
                     // Calculate pending amount for each customer
                     const pendingAmount = customer.bills.reduce(
-                      (sum, bill) => sum + ((bill.total || 0) - (bill.paid || 0)), 
+                      (sum, bill) => sum + ((bill.grandTotal || bill.total || 0) - (bill.paidAmount || bill.paid || 0)),
                       0
                     );
-                    
+
                     return (
                       <tr key={customer.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center text-center ">
+                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 text-center rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
                               {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
                             </div>
-                            <div className="ml-4">
+                            <div className="ml-4 text-center">
                               <div className="text-sm font-medium text-gray-900">{customer.name}</div>
                               <div className="text-xs text-gray-500">{customer.location}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                           {customer.id}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
                           {customer.contact}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-500">
                           {customer.bills.length} {customer.bills.length === 1 ? 'purchase' : 'purchases'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <span className={pendingAmount > 0 ? 'text-red-600' : 'text-green-600'}>
-                            ₹ {pendingAmount.toFixed(2)}
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-sm font-medium">
+                          <span
+                            className={
+                              pendingAmount > 0
+                                ? 'rounded-full px-3 py-1 text-sm font-semibold bg-red-100 text-red-600'
+                                : 'rounded-full px-6 py-1 text-sm font-semibold bg-green-100 text-green-800'
+                            }
+                          >
+                            {pendingAmount > 0 ? 'Pending' : 'Paid'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => openCustomerHistory(customer)}
                             className="text-blue-600 hover:text-blue-900 font-semibold transition-colors duration-200"

@@ -161,7 +161,7 @@ const SellerExpenseList = () => {
         balanceAmount: totalAmount,
         payments: []
     };
-
+    
     // Calculate maximum allowed payment
     const maxAllowedPayment = existingPayment.balanceAmount;
     

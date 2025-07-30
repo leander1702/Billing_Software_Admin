@@ -17,6 +17,9 @@ import BillingInvoices from './Component/Pages/BillingInvoices';
 import { ToastContainer } from 'react-toastify';
 import ProfitReport from './Component/Pages/ProfitReport';
 import SellerExpenseList from './Component/Pages/SellerExpenseList';
+import CreditDue from './Component/Pages/CreditDue';
+import BillingReports from './Component/Pages/BillingReports';
+import SellerBills from './Component/Pages/SellerBills';
 
 
 const MainLayout = ({ activePage, setActivePage }) => (
@@ -30,11 +33,14 @@ const MainLayout = ({ activePage, setActivePage }) => (
         {activePage === 'Products' && <Products />}
         {activePage === 'Billing / Invoices' && <BillingInvoices />}
         {activePage === 'Customers' && <Customers />}
+        {activePage === 'Credit Dues' && <CreditDue />}
         {activePage === 'Product Stock List' && <ProductStockList />}
         {activePage === 'Stock Summary' && <StockDashboard />}
         {activePage === 'ProfitReport' && <ProfitReport />}
         {activePage === 'Expense Menu' && <SellerExpenseList />}
+        {activePage === 'Billing Reports' && <BillingReports/>}
         {activePage === 'Admin Management' && <AdminProfile />}
+        {activePage === 'Seller Bills' && <SellerBills />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>
     </div>
@@ -54,7 +60,7 @@ function App() {
           path="/admin"
           element={<>
             <MainLayout activePage={activePage} setActivePage={setActivePage} />
-            <ToastContainer />
+            {/* <ToastContainer /> */}
           </>}
         />
       </Routes>

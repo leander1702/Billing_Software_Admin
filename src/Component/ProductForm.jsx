@@ -19,6 +19,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         gst: '',
         sgst: '',
         totalPrice: '',
+        perUnitPrice: '',
         stockQuantity: '',
         gstCategory: 'GST',
         quantity: '1',
@@ -115,6 +116,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 netPrice: product.netPrice?.toString() || '',
                 gst: product.gst?.toString() || '',
                 sgst: product.sgst?.toString() || '',
+                perUnitPrice: product.perUnitPrice?.toString(),
                 totalPrice: product.totalPrice?.toString() || '',
                 stockQuantity: product.stockQuantity?.toString() || '',
                 quantity: product.quantity?.toString() || '1',
@@ -160,7 +162,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         // Special handling for numeric fields to remove leading zeros
         const numericFields = [
             'mrp', 'discount', 'gst', 'sgst', 'stockQuantity',
-            'conversionRate', 'sellerPrice', 'mrpPrice', 'quantity'
+            'conversionRate', 'sellerPrice', 'mrpPrice', 'quantity', 'perUnitPrice'
         ];
 
         if (numericFields.includes(name)) {
@@ -273,6 +275,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 netPrice: data.netPrice?.toString() || '',
                 gst: data.gst?.toString() || '',
                 sgst: data.sgst?.toString() || '',
+                perUnitPrice: data.perUnitPrice?.toString(),
                 totalPrice: data.totalPrice?.toString() || '',
                 stockQuantity: data.stockQuantity?.toString() || '',
                 quantity: data.quantity?.toString() || '1',
@@ -318,6 +321,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
             gst: parseFloat(formData.gst) || 0,
             sgst: parseFloat(formData.sgst) || 0,
             totalPrice: parseFloat(formData.totalPrice) || 0,
+            perUnitPrice: parseFloat(formData.perUnitPrice) || 0,
             stockQuantity: parseFloat(formData.stockQuantity) || 0,
             quantity: parseInt(formData.quantity) || 1,
             conversionRate: parseFloat(formData.conversionRate) || 0,
@@ -356,6 +360,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     gst: '0',
                     sgst: '0',
                     totalPrice: '0',
+                    perUnitPrice: '0',
                     stockQuantity: '0',
                     sellerPrice: '0',
                     profit: '0',
@@ -564,7 +569,25 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             </p>
                         )}
                     </div>
-{/* 
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Per Unit Price (₹)</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                            </div>
+                            <input
+                                type="text"
+                                name="perUnitPrice"
+                                value={formData.perUnitPrice}
+                                onChange={handleChange}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                className="no-arrows w-full pl-7 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+                    {/* 
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
                         <div className="relative">
@@ -657,7 +680,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </div>
                     </div>
 
-                      <div>
+                    <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Profit (₹)</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">

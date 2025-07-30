@@ -32,6 +32,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
         totalConvertedQty: 0,
         sellerPrice: '',
         profit: '',
+        lowStockAlert: 0,
     });
 
     const [uniqueCategories, setUniqueCategories] = useState([]);
@@ -124,6 +125,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                 gstCategory: product.gstCategory || 'GST',
                 supplierName: product.supplierName || '',
                 batchNumber: product.batchNumber || '',
+                lowStockAlert: product.lowStockAlert || 0,
                 manufactureDate: product.manufactureDate || '',
                 manufactureLocation: product.manufactureLocation || '',
                 totalConvertedQty: product.secondaryUnit
@@ -564,7 +566,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             </p>
                         )}
                     </div>
-{/* 
+                    {/* 
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
                         <div className="relative">
@@ -657,7 +659,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                         </div>
                     </div>
 
-                      <div>
+                    <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Profit (₹)</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
@@ -830,6 +832,19 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                             />
                         </div>
                     )}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Low Stock Alert</label>
+                        <input
+                            type="text"
+                            name="lowStockAlert"
+                            value={formData.lowStockAlert}
+                            onChange={handleChange}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            className="no-arrows w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Alert when stock is low"
+                        />
+                    </div>
                 </div>
             </div>
 

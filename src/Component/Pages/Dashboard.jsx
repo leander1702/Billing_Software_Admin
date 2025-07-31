@@ -50,7 +50,7 @@ const NotificationModal = ({ alerts, onClose }) => {
   );
 };
 
-const Dashboard = () => {
+const Dashboard = ({ setActivePage }) => {
   const [bills, setBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [lowStockAlerts, setLowStockAlerts] = useState([]);
@@ -378,15 +378,21 @@ const Dashboard = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-            <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+            <button 
+              onClick={() => setActivePage('Products')}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add New Product
             </button>
-            <Link to="/stock-summary" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+            <button 
+              onClick={() => setActivePage('Stock Summary')}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+            >
               <Eye className="mr-2 h-4 w-4" />
               View Stock Summary
-            </Link>
+            </button>
           </div>
         </div>
 

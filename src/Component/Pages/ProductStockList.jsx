@@ -53,7 +53,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
   );
 };
 
-const ProductStockList = () => {
+const ProductStockList = ({ setActivePage }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,7 +233,7 @@ const ProductStockList = () => {
                 </select>
                 <button 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                  onClick={handleAddProduct}
+                    onClick={() => setActivePage('Products')}
                 >
                   <FiPlus /> Add Product
                 </button>

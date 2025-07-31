@@ -205,7 +205,7 @@ const UserManagement = ({ setActivePage }) => {
                   <div>  {latestCompany.logoUrl && (
                     <div className="flex items-center ">
                       <img
-                        src={`http://localhost:5000${latestCompany.logoUrl}`}
+                        src={latestCompany.logoUrl}
                         alt="Company Logo"
                         className="w-16 h-16 object-contain rounded-md border"
                       />

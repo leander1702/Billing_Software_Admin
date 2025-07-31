@@ -29,18 +29,20 @@ const MainLayout = ({ activePage, setActivePage }) => (
     <div className="flex flex-1 overflow-hidden">
       <SideNavbar activeItem={activePage} setActivePage={setActivePage} />
       <main className="flex-1 overflow-y-auto p-4">
-        {activePage === 'Dashboard' && <Dashboard />}
-        {activePage === 'Products' && <Products />}
+        {activePage === 'Dashboard' && (
+          <Dashboard setActivePage={setActivePage} />
+        )}
+        {activePage === 'Products' && <Products setActivePage={setActivePage}/>}
         {activePage === 'Billing / Invoices' && <BillingInvoices />}
         {activePage === 'Customers' && <Customers />}
         {activePage === 'Credit Dues' && <CreditDue />}
-        {activePage === 'Product Stock List' && <ProductStockList />}
-        {activePage === 'Stock Summary' && <StockDashboard />}
+        {activePage === 'Product Stock List' && <ProductStockList setActivePage={setActivePage}/>}
+        {activePage === 'Stock Summary' && <StockDashboard setActivePage={setActivePage}/>}
         {activePage === 'ProfitReport' && <ProfitReport />}
         {activePage === 'Expense Menu' && <SellerExpenseList />}
         {activePage === 'Billing Reports' && <BillingReports/>}
         {activePage === 'Admin Management' && <AdminProfile />}
-        {activePage === 'Seller Bills' && <SellerBills />}
+        {activePage === 'Seller Bills uploaded' && <SellerBills />}
         {activePage === 'User Management' && <UserManagement setActivePage={setActivePage} />}
       </main>
     </div>

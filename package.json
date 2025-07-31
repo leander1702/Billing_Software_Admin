@@ -6,8 +6,9 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
+    "build": "vite build",
     "build:react": "vite build",
-    "build": "npm run build:react && electron-builder",
+    "build:electron": "vite build && electron-builder",
     "electron": "cross-env NODE_ENV=production electron electron/main.cjs",
     "dev:full": "concurrently \"vite\" \"wait-on http://localhost:5174 && cross-env NODE_ENV=development electron electron/main.cjs\""
   },

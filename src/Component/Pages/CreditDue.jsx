@@ -3,7 +3,6 @@ import { Table, Select, Input, DatePicker, Modal, Card, Statistic, Spin, Alert, 
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import axios from 'axios';
 import {
   CalendarDays,
   Search,
@@ -17,6 +16,7 @@ import {
   ChevronUp,
   List,
 } from 'lucide-react';
+import api from '../../service/api';
 
 // Extend dayjs with necessary plugins
 dayjs.extend(isBetween);
@@ -44,7 +44,7 @@ const CreditDue = () => {
     const fetchBills = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/bills');
+        const response = await api.get('/bills');
         console.log('Fetched bills:', response.data);
         setBills(response.data);
         setFilteredBills(response.data);

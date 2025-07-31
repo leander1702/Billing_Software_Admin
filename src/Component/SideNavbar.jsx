@@ -59,7 +59,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: GiProfit, label: 'ProfitReport' },
     { icon: GiExpense, label: 'Expense Menu' },
     { icon: FiPieChart, label: 'Billing Reports' },
-    { icon: FiPieChart, label: 'Seller Bills' },
+    { icon: FiPieChart, label: 'Seller Bills uploaded' },
     // { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },
 

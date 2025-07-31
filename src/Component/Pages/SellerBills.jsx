@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 const SellerBills = () => {
   const navigate = useNavigate();
   const [supplierName, setSupplierName] = useState('');
-  const [batchNumber, setBatchNumber] = useState('');
+  const [brand, setBrand] = useState('');
   const [sellerId, setSellerId] = useState(null);
   const [bills, setBills] = useState([]);
   const [gstBills, setGstBills] = useState([]);
@@ -23,20 +23,20 @@ const SellerBills = () => {
     billFile: null
   });
 
-  // Fetch seller ID when supplier and batch are entered
+  // Fetch seller ID when supplier and brand are entered
   useEffect(() => {
     const fetchSellerId = async () => {
-      if (supplierName && batchNumber) {
+      if (supplierName && brand) {
         try {
           setLoading(true);
           const response = await api.get('/products/seller-info', {
-            params: { supplierName, batchNumber }
+            params: { supplierName, brand }
           });
           setSellerId(response.data.sellerId);
           fetchBills(response.data.sellerId);
         } catch (error) {
           console.error('Error fetching seller ID:', error);
-          Swal.fire('Error', 'Could not find seller information', 'error');
+          // Swal.fire('Error', 'Could not find seller information', 'error');
           setSellerId(null);
           setBills([]);
           setGstBills([]);
@@ -49,7 +49,7 @@ const SellerBills = () => {
 
     const debounceTimer = setTimeout(fetchSellerId, 500);
     return () => clearTimeout(debounceTimer);
-  }, [supplierName, batchNumber]);
+  }, [supplierName, brand]);
 
   // Fetch bills for the seller
   const fetchBills = async (id) => {
@@ -111,7 +111,7 @@ const SellerBills = () => {
     const formPayload = new FormData();
     formPayload.append('sellerId', sellerId);
     formPayload.append('supplierName', supplierName);
-    formPayload.append('batchNumber', batchNumber);
+    formPayload.append('brand', brand);
     formPayload.append('billType', formData.billType);
     formPayload.append('billNumber', formData.billNumber);
     formPayload.append('billDate', formData.billDate);
@@ -225,14 +225,14 @@ const SellerBills = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Batch Number
+              Brand
             </label>
             <input
               type="text"
-              value={batchNumber}
-              onChange={(e) => setBatchNumber(e.target.value)}
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              placeholder="Enter batch number"
+              placeholder="Enter brand"
             />
           </div>
         </div>
@@ -240,7 +240,7 @@ const SellerBills = () => {
         {sellerId && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-green-600">
-              Seller verified: {supplierName} - {batchNumber}
+              Seller verified: {supplierName} - {brand}
             </p>
             <button
               onClick={toggleUploadForm}
@@ -374,7 +374,7 @@ const SellerBills = () => {
               </button>
             </div>
             <p className="text-sm text-gray-600">
-              Showing bills for: {supplierName} - {batchNumber}
+              Showing bills for: {supplierName} - {brand}
             </p>
           </div>
 

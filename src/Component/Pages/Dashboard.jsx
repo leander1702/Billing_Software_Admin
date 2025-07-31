@@ -37,8 +37,18 @@ const NotificationModal = ({ alerts, onClose }) => {
           <ul className="divide-y divide-gray-200 max-h-60 overflow-y-auto">
             {alerts.map((alert, index) => (
               <li key={index} className="py-3 flex justify-between items-center">
-                <span className="text-base font-medium text-gray-800">{alert.productName}</span>
-                <span className="text-base text-red-600 font-semibold">{alert.currentStock} left</span>
+                <div>
+                  <span className="text-base font-medium text-gray-800">{alert.productName}</span>
+                  <div className="text-sm text-gray-500">Code: {alert.productCode}</div>
+                  <div className="text-sm text-gray-500">Category: {alert.category}</div>
+                </div>
+                <div className="text-right">
+                  <span className="text-base text-red-600 font-semibold">
+                   Available : {alert.currentStock} 
+                    {/* left (threshold: {alert.threshold}) */}
+                  </span>
+                  <div className="text-sm text-gray-500"></div>
+                </div>
               </li>
             ))}
           </ul>
@@ -67,24 +77,72 @@ const Dashboard = ({ setActivePage }) => {
         // Fetch bills data
         const billsResponse = await api.get('/bills');
         setBills(billsResponse.data || []);
-        
+
         // Process data for dashboard
         processDashboardData(billsResponse.data || []);
-        
-        // Fetch low stock products from your API
-        const stockResponse = await api.get('/stock-summary');
-        const stockData = stockResponse.data || [];
-        const lowStockItems = stockData.filter(item => item.currentStock < 10);
-        setLowStockAlerts(lowStockItems.map(item => ({
-          productName: item.productName || 'Unknown Product',
-          currentStock: item.currentStock || 0
-        })));
+
+        // Fetch low stock products
+        await fetchLowStockProducts();
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
+
+ const fetchLowStockProducts = async () => {
+  try {
+    // First get stock summary to find current stock levels
+    const stockResponse = await api.get('/stock-summary');
+    const stockData = stockResponse.data || [];
+    
+    // Then get product details to find low stock thresholds
+    const productsResponse = await api.get('/products');
+    const productsData = productsResponse.data || [];
+    
+    // Combine the data to find low stock items
+    const alerts = productsData
+      .filter(product => {
+        // Find matching stock item
+        const stockItem = stockData.find(s => 
+          s.productCode === product.productCode || 
+          s._id === product._id
+        );
+        
+        if (!stockItem) return false; // Skip if no stock data found
+        
+        // Get current stock and threshold
+        const currentStock = stockItem.availableQuantity || stockItem.currentStock || 0;
+        const threshold = product.lowStockAlert || 10; // Default threshold is 10
+        
+        return currentStock < threshold;
+      })
+      .map(product => {
+        const stockItem = stockData.find(s => 
+          s.productCode === product.productCode || 
+          s._id === product._id
+        ) || {};
+        
+        const currentStock = stockItem.availableQuantity || stockItem.currentStock || 0;
+        const threshold = product.lowStockAlert || 10;
+        
+        return {
+          productId: product._id || stockItem._id,
+          productCode: product.productCode || stockItem.productCode,
+          productName: product.productName || stockItem.productName || 'Unknown Product',
+          currentStock: currentStock,
+          price: product.netPrice || product.mrp || product.price || 0,
+          category: product.category || 'N/A',
+          sku: product.productCode || product.sku || 'N/A',
+          threshold: threshold
+        };
+      });
+
+    setLowStockAlerts(alerts);
+  } catch (error) {
+    console.error('Error fetching low stock products:', error);
+  }
+};
 
     fetchData();
   }, []);
@@ -128,7 +186,7 @@ const Dashboard = ({ setActivePage }) => {
       if (!bill || !bill.date) return;
       const month = new Date(bill.date).getMonth();
       const total = bill.total || 0;
-      
+
       if (!monthlyRev[month]) {
         monthlyRev[month] = total;
       } else {
@@ -140,7 +198,7 @@ const Dashboard = ({ setActivePage }) => {
 
   // Calculate summary metrics with fallback values
   const totalBills = bills.length || 0;
-  const totalRevenue = bills.reduce((sum, bill) => sum + (bill?.paidAmount|| 0), 0);
+  const totalRevenue = bills.reduce((sum, bill) => sum + (bill?.paidAmount || 0), 0);
   const uniqueCustomers = new Set(bills.map(bill => bill?.customer?.id).filter(Boolean)).size;
   const allProductsInBills = bills.flatMap(bill => bill?.products || []);
   const totalProductsInStock = allProductsInBills.reduce((sum, product) => sum + (product?.quantity || 0), 0);
@@ -307,10 +365,10 @@ const Dashboard = ({ setActivePage }) => {
   // Filter customers for the table with proper null checks
   const customers = bills.reduce((acc, bill) => {
     if (!bill || !bill.customer) return acc;
-    
+
     const customerId = bill.customer.id;
     const existingCustomer = acc.find(c => c.id === customerId);
-    
+
     if (!existingCustomer) {
       acc.push({
         id: customerId,
@@ -322,7 +380,7 @@ const Dashboard = ({ setActivePage }) => {
       existingCustomer.totalSpent += bill.total || 0;
       const billDate = bill.date ? new Date(bill.date) : new Date(0);
       const lastVisitDate = existingCustomer.lastVisit ? new Date(existingCustomer.lastVisit) : new Date(0);
-      
+
       if (billDate > lastVisitDate) {
         existingCustomer.lastVisit = bill.date;
       }
@@ -557,8 +615,18 @@ const Dashboard = ({ setActivePage }) => {
                     <ul className="divide-y divide-red-100">
                       {lowStockAlerts.map((alert, index) => (
                         <li key={index} className="py-3 flex justify-between items-center">
-                          <div className="text-base font-medium text-gray-900">{alert.productName}</div>
-                          <div className="text-base text-red-600 font-semibold">Only {alert.currentStock} left</div>
+                          <div>
+                            <div className="text-base font-medium text-gray-900">{alert.productName}</div>
+                            <div className="text-sm text-gray-500">Code: {alert.productCode}</div>
+                            <div className="text-sm text-gray-500">Category: {alert.category}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base text-red-600 font-semibold">
+                             Available : {alert.currentStock} 
+                              {/* left (threshold: {alert.threshold}) */}
+                            </div>
+                            <div className="text-sm text-gray-500">Price: ₹{alert.price}</div>
+                          </div>
                         </li>
                       ))}
                     </ul>

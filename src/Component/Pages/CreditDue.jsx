@@ -67,33 +67,43 @@ const CreditDue = () => {
     // Apply time range filter
     if (timeRange !== 'custom') {
       const now = dayjs();
-      let startDate;
+      let startDate, endDate;
 
       switch (timeRange) {
         case 'year':
-          startDate = now.clone().subtract(1, 'year').startOf('day');
+          startDate = now.startOf('year');
+          endDate = now.endOf('year');
           break;
         case 'month':
-          startDate = now.clone().subtract(1, 'month').startOf('day');
+          startDate = now.startOf('month');
+          endDate = now.endOf('month');
           break;
         case 'week':
-          startDate = now.clone().subtract(1, 'week').startOf('day');
+          startDate = now.startOf('week');
+          endDate = now.endOf('week');
           break;
         case 'day':
-          startDate = now.clone().subtract(1, 'day').startOf('day');
+          startDate = now.startOf('day');
+          endDate = now.endOf('day');
           break;
         default:
           startDate = null;
+          endDate = null;
       }
 
-      if (startDate) {
+      if (startDate && endDate) {
         filtered = filtered.filter(bill =>
-          dayjs(bill.date).isSameOrAfter(startDate)
-        )
+          dayjs(bill.date).isBetween(startDate, endDate, null, '[]')
+        );
       }
     } else if (customDateRange.length === 2 && customDateRange[0] && customDateRange[1]) {
       filtered = filtered.filter(bill =>
-        dayjs(bill.date).isBetween(customDateRange[0].startOf('day'), customDateRange[1].endOf('day'), null, '[]')
+        dayjs(bill.date).isBetween(
+          customDateRange[0].startOf('day'), 
+          customDateRange[1].endOf('day'), 
+          null, 
+          '[]'
+        )
       );
     }
 
@@ -126,9 +136,9 @@ const CreditDue = () => {
     const pendingCustomers = {};
 
     filteredBills.forEach(bill => {
-      // Only include bills with an unpaid amount greater than 0 when status filter is not 'paid'
-      if (statusFilter === 'all' || (statusFilter === 'pending' && bill.unpaidAmountForThisBill > 0) ||
-        (statusFilter === 'paid' && bill.unpaidAmountForThisBill <= 0)) {
+      if (statusFilter === 'all' || 
+          (statusFilter === 'pending' && bill.unpaidAmountForThisBill > 0) ||
+          (statusFilter === 'paid' && bill.unpaidAmountForThisBill <= 0)) {
 
         const customerId = bill.customer?.id || `unknown-${bill.billNumber}`;
         const customerName = bill.customer?.name || 'Unknown Customer';
@@ -196,49 +206,6 @@ const CreditDue = () => {
       },
       width: 150,
     },
-    // {
-    //   title: 'Products',
-    //   dataIndex: 'products',
-    //   key: 'products',
-    //   render: (_, record) => {
-    //     const latestBill = record.bills[record.bills.length - 1];
-    //     if (!latestBill?.items?.length) return 'No products';
-
-    //     const productNames = latestBill.items.map(item => item.product?.name || 'Unknown Product');
-    //     return (
-    //       <div className="max-w-xs truncate" title={productNames.join(', ')}>
-    //         {productNames.slice(0, 2).join(', ')}
-    //         {productNames.length > 2 && ` +${productNames.length - 2} more`}
-    //       </div>
-    //     );
-    //   },
-    // },
-    // {
-    //   title: 'Quantity',
-    //   dataIndex: 'quantity',
-    //   key: 'quantity',
-    //   render: (_, record) => {
-    //     const latestBill = record.bills[record.bills.length - 1];
-    //     if (!latestBill?.items?.length) return 'N/A';
-
-    //     const totalQuantity = latestBill.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    //     return totalQuantity;
-    //   },
-    //   width: 100,
-    // },
-    // {
-    //   title: 'Price',
-    //   dataIndex: 'price',
-    //   key: 'price',
-    //   render: (_, record) => {
-    //     const latestBill = record.bills[record.bills.length - 1];
-    //     if (!latestBill?.items?.length) return 'N/A';
-
-    //     const totalPrice = latestBill.items.reduce((sum, item) => sum + (item.price || 0), 0);
-    //     return `₹${totalPrice.toFixed(2)}`;
-    //   },
-    //   width: 120,
-    // },
     {
       title: 'Customer Name',
       dataIndex: 'name',
@@ -520,7 +487,7 @@ const CreditDue = () => {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card bordered={false} className="shadow-xl  transition-all duration-300 rounded-xl bg-gradient-to-br from-green-50 to-green-100">
+            <Card bordered={false} className="shadow-xl transition-all duration-300 rounded-xl bg-gradient-to-br from-green-50 to-green-100">
               <Statistic
                 title={<span className="text-green-700 flex items-center gap-2"><Wallet className="w-5 h-5" /> Total Bill Amount</span>}
                 value={totalSummary.totalAmount}
@@ -529,7 +496,7 @@ const CreditDue = () => {
                 valueStyle={{ color: '#15803d' }}
               />
             </Card>
-            <Card bordered={false} className="shadow-xl  transition-all duration-300 rounded-xl bg-gradient-to-br from-red-50 to-red-100">
+            <Card bordered={false} className="shadow-xl transition-all duration-300 rounded-xl bg-gradient-to-br from-red-50 to-red-100">
               <Statistic
                 title={<span className="text-red-700 flex items-center gap-2"><Landmark className="w-5 h-5" /> Total Pending Amount</span>}
                 value={totalSummary.pendingAmount}
@@ -538,7 +505,7 @@ const CreditDue = () => {
                 valueStyle={{ color: '#b91c1c' }}
               />
             </Card>
-            <Card bordered={false} className="shadow-xl  transition-all duration-300 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100">
+            <Card bordered={false} className="shadow-xl transition-all duration-300 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100">
               <Statistic
                 title={<span className="text-blue-700 flex items-center gap-2"><Wallet className="w-5 h-5" /> Total Paid Amount</span>}
                 value={totalSummary.paidAmount}
@@ -550,7 +517,7 @@ const CreditDue = () => {
           </div>
 
           {/* Customers Table */}
-          <div className="bg-white  p-6 rounded-xl shadow-lg">
+          <div className="bg-white p-6 rounded-xl shadow-lg">
             <Table
               columns={columns}
               dataSource={pendingCustomers}
@@ -748,26 +715,12 @@ const CreditDue = () => {
                         <h4 className="font-semibold text-gray-800 mb-2">Product Details</h4>
                         <Table
                           columns={[
-                            // {
-                            //   title: 'Product Code',
-                            //   dataIndex: 'productCode', // Directly access productCode if it exists at the top level
-                            //   key: 'productCode',
-                            //   render: (text, record) => {
-                            //     // If productCode is at top level, use that
-                            //     if (text) return text;
-                            //     // Otherwise try to get from nested product object
-                            //     return record.product?.code || record.product?.id || 'N/A';
-                            //   },
-                            //   width: 120,
-                            // },
                             {
                               title: 'Name',
-                              dataIndex: 'name', // Directly access name if it exists at the top level
+                              dataIndex: 'name',
                               key: 'name',
                               render: (text, record) => {
-                                // If name is at top level, use that
                                 if (text) return text;
-                                // Otherwise try to get from nested product object
                                 return record.product?.name || 'Unknown Product';
                               },
                             },

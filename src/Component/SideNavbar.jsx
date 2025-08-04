@@ -12,7 +12,7 @@ import api from '../service/api';
 const NavItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
   <li
     className={`w-full flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 ease-in-out
-      ${active ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'}
+      ${active ? 'bg-gray-600 text-white shadow-md' : 'text-gray-200 '}
       ${collapsed ? 'justify-center' : ''}`}
     onClick={onClick}
     title={collapsed ? label : ''}
@@ -62,7 +62,6 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
     { icon: FiPieChart, label: 'Seller Bills uploaded' },
     // { icon: FiSettings, label: 'Settings' },
     { icon: FiUser, label: 'Admin Management' },
-
   ];
 
   const handleLogout = () => {
@@ -71,7 +70,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
   };
 
   return (
-    <aside className={`relative flex flex-col bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-200 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
+    <aside className={`relative flex flex-col bg-gray-700 shadow-xl transition-all duration-300 ease-in-out ${collapsed ? 'w-20 items-center' : 'w-60'}`}>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto mt-2">
@@ -102,7 +101,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
 
         {/* Footer with company name */}
         {!collapsed && (
-          <div className="text-xs text-gray-500  text-center">
+          <div className="text-xs text-gray-100  text-center">
             &copy; {new Date().getFullYear()} {company.businessName}
           </div>
         )}
@@ -111,7 +110,7 @@ const SideNavbar = ({ activeItem, setActivePage }) => {
       {/* Collapse/Expand Button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className={`absolute top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-blue-600 bg-white shadow-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${collapsed ? '-right-5' : '-right-5'}`}
+        className={`absolute top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-blue-600 bg-white shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${collapsed ? '-right-5' : '-right-5'}`}
         title={collapsed ? 'Expand' : 'Collapse'}
       >
         {collapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}

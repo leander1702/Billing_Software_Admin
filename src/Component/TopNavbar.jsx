@@ -44,17 +44,17 @@ const TopNavbar = ({ setActivePage }) => {
   }, []);
 
   return (
-    <header className="bg-gradient-to-br from-blue-100 to-indigo-100  border-blue-200  flex items-center justify-between px-6 py-1">
+    <header className="bg-gray-700  flex items-center justify-between px-6 py-1">
       {/* Left: Logo + Company Name */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm">
+        <div className="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm">
           <img
             src={`http://localhost:5000${company.logoUrl}`}
             alt="Logo"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover text-xs text-white"
           />
         </div>
-        <h1 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
+        <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gray-200">
           {company.businessName?.replace(/\b\w/g, char => char.toUpperCase())}
         </h1>
       </div>

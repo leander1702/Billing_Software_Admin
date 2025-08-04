@@ -44,39 +44,47 @@ const TopNavbar = ({ setActivePage }) => {
   }, []);
 
   return (
-    <header className="bg-gradient-to-br from-blue-100 to-indigo-100  border-blue-200  flex items-center justify-between px-6 py-1">
+    <header className="bg-gray-700  flex items-center justify-between px-6 py-1">
       {/* Left: Logo + Company Name */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm">
+        <div className="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm">
           <img
             src={`http://localhost:5000${company.logoUrl}`}
             alt="Logo"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover text-xs text-white"
           />
         </div>
-        <h1 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
+        <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gray-200">
           {company.businessName?.replace(/\b\w/g, char => char.toUpperCase())}
         </h1>
       </div>
 
       {/* Right: Profile Dropdown */}
       <div className="relative" ref={dropdownRef}>
-        <div className="flex items-center gap-2 md:gap-3 px-3 py-2 cursor-pointer rounded-lg transition-all duration-200 ease-in-out bg-white">
+        <div className="flex items-center gap-2 md:gap-3 px-3 py-1 cursor-pointer  bg-blue-100 rounded-lg transition-all duration-200 ease-in-out bg-white">
 
           {/* Clickable avatar + name to navigate */}
           <div
             className="flex items-center gap-3 flex-1"
            onClick={() => setActivePage('User Management')} 
           >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shadow-md flex-shrink-0">
+            {/* <div className="w-9 h-9  md:w-10 md:h-10  rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shadow-md flex-shrink-0">
               {admin.username?.charAt(0).toUpperCase() || 'A'}
-            </div>
+            </div> */}
             <div className="text-left hidden sm:block">
-              <p className="text-sm font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+              {/* <p className="text-xs font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
                 {admin.username?.replace(/\b\w/g, c => c.toUpperCase()) || 'ADMIN'}
-              </p>
-              <p className="text-xs text-blue-500 flex items-center gap-1 bg-blue-100 p-1 rounded-md">
-                <FiUser size={10} /> Admin 
+              </p> */}
+              <p className="text-sm  flex items-center gap-1 p-1 rounded-md">
+                <FiUser size={15} className='md:w-8 md:h-8 p-2 rounded-full bg-gradient-to-br  from-blue-500 to-indigo-600' /><span>
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  </span> Admin 
               </p>
             </div>
           </div>

@@ -36,7 +36,6 @@ const SellerBills = () => {
           fetchBills(response.data.sellerId);
         } catch (error) {
           console.error('Error fetching seller ID:', error);
-          // Swal.fire('Error', 'Could not find seller information', 'error');
           setSellerId(null);
           setBills([]);
           setGstBills([]);
@@ -193,6 +192,10 @@ const SellerBills = () => {
       console.error('Download error:', error);
       Swal.fire('Error', 'Failed to download bill', 'error');
     }
+  };
+
+  const handleView = (billId) => {
+    navigate(`/seller-bills/view/${billId}`);
   };
 
   const formatDate = (dateString) => {
@@ -430,10 +433,16 @@ const SellerBills = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {bill.fileName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleView(bill.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View
+                        </button>
                         <button
                           onClick={() => handleDownload(bill.id, bill.fileName)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-green-600 hover:text-green-900"
                         >
                           Download
                         </button>
@@ -465,10 +474,16 @@ const SellerBills = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {bill.fileName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleView(bill.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View
+                        </button>
                         <button
                           onClick={() => handleDownload(bill.id, bill.fileName)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-green-600 hover:text-green-900"
                         >
                           Download
                         </button>
@@ -500,14 +515,21 @@ const SellerBills = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {bill.fileName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleView(bill.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View
+                        </button>
                         <button
                           onClick={() => handleDownload(bill.id, bill.fileName)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-green-600 hover:text-green-900"
                         >
                           Download
                         </button>
                       </td>
+                      
                     </tr>
                   ))}
                 </tbody>

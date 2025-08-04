@@ -4,7 +4,7 @@ import StockUpdateForm from './StockUpdateForm';
 import api from '../../service/api';
 
 const StockDashboard = () => {
-  const [stockSummary, setStockSummary] = useState([]);
+  const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,31 +13,41 @@ const StockDashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState(null);
 
- const fetchStockSummary = async () => {
-  try {
-    setLoading(true);
-    const response = await api.get('/stock-summary');
-    setStockSummary(response.data || []);
-    setError(null);
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch stock data';
-      console.error('Failed to load stock summary:', errorMessage);
-      setError(errorMessage);
-    } else {
-      console.error('Unexpected error:', err);
-      setError('An unexpected error occurred');
+  const fetchAllStockData = async () => {
+    try {
+      setLoading(true);
+      // First get all products with their unit information
+      const productsResponse = await api.get('/products');
+      const products = productsResponse.data;
+      
+      // Then fetch stock data for each product
+      const stockPromises = products.map(product => 
+        api.get(`products/stock/${product.productCode}`).then(res => ({
+          ...res.data,
+          product // Include the full product details
+        }))
+      );
+      
+      const allStockData = await Promise.all(stockPromises);
+      setStockData(allStockData.filter(data => data.success).map(data => ({
+        ...data.product,
+        stock: data.stock,
+        stockHistory: data.stockHistory
+      })));
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load stock data:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to fetch stock data');
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
-    fetchStockSummary();
+    fetchAllStockData();
   }, [refreshKey]);
 
-  const filteredStock = stockSummary.filter(item => {
+  const filteredStock = stockData.filter(item => {
     const productName = item?.productName || '';
     const category = item?.category || '';
     const searchTermLower = (searchTerm || '').toLowerCase();
@@ -46,34 +56,53 @@ const StockDashboard = () => {
                          category.toLowerCase().includes(searchTermLower);
 
     let matchesTime = true;
-    if (timeFilter === 'recent' && item?.lastUploaded) {
+    if (timeFilter === 'recent' && item?.stock?.updatedAt) {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      matchesTime = new Date(item.lastUploaded) > oneWeekAgo;
+      matchesTime = new Date(item.stock.updatedAt) > oneWeekAgo;
     }
 
     return matchesSearch && matchesTime;
   });
 
-  const formatQuantity = (item, quantity, showSecondary = true) => {
-    if (!item) return 'N/A';
+  const formatQuantity = (item, quantity) => {
+    if (!item || quantity === undefined || quantity === null) return 'N/A';
     
-    const baseUnit = item?.baseUnit || '';
-    const secondaryUnit = item?.secondaryUnit || '';
+    const baseUnit = item?.baseUnit || 'units';
+    const secondaryUnit = item?.secondaryUnit;
     const conversionRate = item?.conversionRate || 1;
 
-    if (baseUnit === 'bag' && secondaryUnit === 'kg' && showSecondary) {
-      const fullBags = Math.floor(quantity);
-      const remainingKg = (quantity - fullBags) * conversionRate;
-      let result = `${fullBags} ${baseUnit}`;
-      if (remainingKg > 0) result += ` + ${remainingKg.toFixed(2)} ${secondaryUnit}`;
-      return result;
+    // If no secondary unit or conversion is 1, just show base unit
+    if (!secondaryUnit || conversionRate === 1) {
+      return `${quantity.toFixed(2)} ${baseUnit}`;
     }
-    return `${quantity?.toFixed(2) || '0.00'} ${baseUnit}`;
+
+    // Calculate full base units and remaining in secondary units
+    const fullBaseUnits = Math.floor(quantity);
+    const remainingQuantity = quantity - fullBaseUnits;
+    const secondaryQuantity = remainingQuantity * conversionRate;
+
+    let result = `${fullBaseUnits} ${baseUnit}`;
+    if (secondaryQuantity > 0) {
+      result += ` ${secondaryQuantity.toFixed(2)} ${secondaryUnit}`;
+    }
+
+    return result;
   };
 
-  const criticalStock = filteredStock.filter(item => (item?.currentStock || 0) <= 2);
-  const trendingStock = filteredStock.filter(item => (item?.totalSoldOverall || 0) >= 5);
+  const criticalStock = filteredStock.filter(item => {
+    const available = item?.stock?.availableQuantity || 0;
+    return available <= (item?.minStockLevel || 2);
+  });
+
+  const trendingStock = filteredStock.filter(item => {
+    // Assuming stockHistory contains sales data
+    const recentSales = item.stockHistory?.filter(entry => 
+      entry.type === 'sale' && 
+      new Date(entry.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    ).length || 0;
+    return recentSales >= 5;
+  });
 
   if (loading) {
     return (
@@ -170,86 +199,96 @@ const StockDashboard = () => {
         <div className="px-6 py-4 border-b flex justify-between items-center">
           <h3 className="font-semibold text-lg">Product Inventory</h3>
           <p className="text-sm text-gray-500">
-            Showing {filteredStock.length} of {stockSummary.length} products
+            Showing {filteredStock.length} of {stockData.length} products
           </p>
         </div>
 
         <div className="divide-y">
           {filteredStock.length > 0 ? (
-            filteredStock.map((item) => (
-              <div key={item?._id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                  <div className="md:col-span-4">
-                    <h3 className="font-medium text-gray-900">{item?.productName || 'Unnamed Product'}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{item?.category || 'Uncategorized'}</p>
-                    <div className="flex items-center mt-2 text-sm text-gray-500">
-                      <FiCalendar className="mr-1" />
-                      <span className="mr-3">
-                        {item?.lastUploaded ? new Date(item.lastUploaded).toLocaleDateString() : 'N/A'}
-                      </span>
-                      <FiClock className="mr-1" />
-                      <span>{item?.lastUploaded ? new Date(item.lastUploaded).toLocaleTimeString() : 'N/A'}</span>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-500">Stock Level</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        (item?.currentStock || 0) <= 2 ? 'bg-red-100 text-red-800' :
-                        (item?.currentStock || 0) <= 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {(item?.currentStock || 0) <= 2 ? 'Low' : (item?.currentStock || 0) <= 10 ? 'Medium' : 'High'}
-                      </span>
-                    </div>
-                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full ${
-                          (item?.currentStock || 0) <= 2 ? 'bg-red-500' :
-                          (item?.currentStock || 0) <= 10 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ 
-                          width: `${Math.min(100, ((item?.currentStock || 0) / (item?.initialStock || 1)) * 100)}%` 
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-3">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <p className="text-sm text-gray-500">Uploaded</p>
-                        <p className="font-medium">{formatQuantity(item, item?.initialStock || 0)}</p>
+            filteredStock.map((item) => {
+              const totalQuantity = item?.stock?.totalQuantity || 0;
+              const availableQuantity = item?.stock?.availableQuantity || 0;
+              const soldQuantity = totalQuantity - availableQuantity;
+              
+              return (
+                <div key={item?._id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <div className="md:col-span-4">
+                      <div className='flex gap-3'>
+                        <h3 className="font-medium text-gray-900">{item?.productCode}</h3>
+                        <h3 className="font-medium text-gray-900">{item?.productName}</h3>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Sold</p>
-                        <p className="font-medium text-blue-600">{formatQuantity(item, item?.totalSold || 0)}</p>
+                      <p className="text-sm text-gray-500 mt-1">{item?.category || 'Uncategorized'}</p>
+                      <div className="flex items-center mt-2 text-sm text-gray-500">
+                        <FiCalendar className="mr-1" />
+                        <span className="mr-3">
+                          {item?.stock?.updatedAt ? new Date(item.stock.updatedAt).toLocaleDateString() : 'N/A'}
+                        </span>
+                        <FiClock className="mr-1" />
+                        <span>{item?.stock?.updatedAt ? new Date(item.stock.updatedAt).toLocaleTimeString() : 'N/A'}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Remaining</p>
-                        <p className={`font-medium ${
-                          (item?.currentStock || 0) <= 2 ? 'text-red-600' : 'text-gray-900'
+                    </div>
+
+                    <div className="md:col-span-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500">Stock Level</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          availableQuantity <= (item?.minStockLevel || 2) ? 'bg-red-100 text-red-800' :
+                          availableQuantity <= 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
                         }`}>
-                          {formatQuantity(item, item?.currentStock || 0)}
-                        </p>
+                          {availableQuantity <= (item?.minStockLevel || 2) ? 'Low' : 
+                           availableQuantity <= 10 ? 'Medium' : 'High'}
+                        </span>
+                      </div>
+                      <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full ${
+                            availableQuantity <= (item?.minStockLevel || 2) ? 'bg-red-500' :
+                            availableQuantity <= 10 ? 'bg-yellow-500' : 'bg-green-500'
+                          }`}
+                          style={{ 
+                            width: `${Math.min(100, (availableQuantity / (totalQuantity || 1)) * 100)}%` 
+                          }}
+                        ></div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="md:col-span-2 flex justify-end">
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(item);
-                        setShowStockForm(true);
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      Manage Stock
-                    </button>
+                    <div className="md:col-span-3">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-sm text-gray-500">Uploaded</p>
+                          <p className="font-medium">{formatQuantity(item, totalQuantity)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Sold</p>
+                          <p className="font-medium text-blue-600">{formatQuantity(item, soldQuantity)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Remaining</p>
+                          <p className={`font-medium ${
+                            availableQuantity <= (item?.minStockLevel || 2) ? 'text-red-600' : 'text-gray-900'
+                          }`}>
+                            {formatQuantity(item, availableQuantity)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 flex justify-end">
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(item);
+                          setShowStockForm(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Manage Stock
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="p-6 text-center text-gray-500">
               No products found matching your criteria

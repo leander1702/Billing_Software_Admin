@@ -44,7 +44,7 @@ const NotificationModal = ({ alerts, onClose }) => {
                 </div>
                 <div className="text-right">
                   <span className="text-base text-red-600 font-semibold">
-                   Available : {alert.currentStock} 
+                   Available : {alert.currentStock.toFixed(2)} 
                     {/* left (threshold: {alert.threshold}) */}
                   </span>
                   <div className="text-sm text-gray-500"></div>
@@ -622,7 +622,7 @@ const Dashboard = ({ setActivePage }) => {
                           </div>
                           <div className="text-right">
                             <div className="text-base text-red-600 font-semibold">
-                             Available : {alert.currentStock} 
+                             Available : {alert.currentStock.toFixed(2)} 
                               {/* left (threshold: {alert.threshold}) */}
                             </div>
                             <div className="text-sm text-gray-500">Price: ₹{alert.price}</div>

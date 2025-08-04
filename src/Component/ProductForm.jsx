@@ -627,7 +627,7 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
                     {formData.gstCategory === 'GST' && (
                         <>
                             <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">GST (%)</label>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">CGST (%)</label>
                                 <div className="relative">
                                     <input
                                         type="text"

@@ -44,7 +44,7 @@ const NotificationModal = ({ alerts, onClose }) => {
                 </div>
                 <div className="text-right">
                   <span className="text-base text-red-600 font-semibold">
-                    Available : {alert.currentStock}
+                   Available : {alert.currentStock.toFixed(2)} 
                     {/* left (threshold: {alert.threshold}) */}
                   </span>
                   <div className="text-sm text-gray-500"></div>
@@ -543,7 +543,6 @@ const Dashboard = ({ setActivePage }) => {
             </div>
           </div>
         </div>
-
         {/* Charts Section - Stack on mobile, side-by-side on larger screens */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
           {/* Monthly Revenue Chart */}
@@ -581,6 +580,41 @@ const Dashboard = ({ setActivePage }) => {
                 >
                   Less Selling
                 </button>
+            {/* Alerts and Customer Overview */}
+            <div className="mb-8">
+              {/* Low Stock Alerts */}
+              <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+                <div className="px-6 py-5 border-b border-gray-200 bg-red-50">
+                  <h3 className="text-lg leading-6 font-semibold text-red-800 flex items-center">
+                    <Bell className="mr-2 h-5 w-5" /> Low Stock Alerts
+                  </h3>
+                </div>
+                <div className="bg-white p-6">
+                  {lowStockAlerts.length > 0 ? (
+                    <ul className="divide-y divide-red-100">
+                      {lowStockAlerts.map((alert, index) => (
+                        <li key={index} className="py-3 flex justify-between items-center">
+                          <div>
+                            <div className="text-base font-medium text-gray-900">{alert.productName}</div>
+                            <div className="text-sm text-gray-500">Code: {alert.productCode}</div>
+                            <div className="text-sm text-gray-500">Category: {alert.category}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base text-red-600 font-semibold">
+                             Available : {alert.currentStock.toFixed(2)} 
+                              {/* left (threshold: {alert.threshold}) */}
+                            </div>
+                            <div className="text-sm text-gray-500">Price: ₹{alert.price}</div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-center py-4 text-gray-600 text-base">
+                      All good! No low stock alerts.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="h-80 flex justify-center items-center">

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiSearch, FiPlus, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiEdit, FiTrash2, FiSearch, FiPlus, FiEye, FiPrinter } from 'react-icons/fi';
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import api from '../../service/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ReactToPrint from 'react-to-print';
 
 // ProductDetailsModal Component
 const ProductDetailsModal = ({ product, onClose }) => {
@@ -23,7 +24,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
           <p><strong>MRP:</strong> ₹{product.mrp?.toFixed(2)}</p>
           <p><strong>Discount:</strong> {product.discount ? `${product.discount}%` : '-'}</p>
           <p><strong>Net Price:</strong> ₹{product.netPrice?.toFixed(2)}</p>
-          <p><strong>GST:</strong> {product.gst ? `${product.gst}%` : '-'}</p>
+          <p><strong>CGST:</strong> {product.gst ? `${product.gst}%` : '-'}</p>
           <p><strong>SGST:</strong> {product.sgst ? `${product.sgst}%` : '-'}</p>
           <p><strong>Total Price:</strong> ₹{product.totalPrice?.toFixed(2)}</p>
           <p><strong>Stock Quantity:</strong> {product.stockQuantity} {product.baseUnit}</p>
@@ -53,6 +54,50 @@ const ProductDetailsModal = ({ product, onClose }) => {
   );
 };
 
+// Printable Component
+const PrintableProducts = React.forwardRef(({ products, filterType }, ref) => {
+  const currentDate = new Date().toLocaleDateString();
+
+  return (
+    <div ref={ref} className="p-4">
+      <div className="text-center mb-4">
+        <h1 className="text-xl font-bold">Product Stock Report</h1>
+        <p className="text-sm">Filter: {filterType}</p>
+        <p className="text-sm">Date: {currentDate}</p>
+      </div>
+      <table className="min-w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border border-gray-300 px-2 py-1 text-left">Product Name</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">Category</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">Brand</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">Stock</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">CGST (%)</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">SGST (%)</th>
+            <th className="border border-gray-300 px-2 py-1 text-left">Supplier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((product, index) => (
+            <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <td className="border border-gray-300 px-2 py-1">{product.productName}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.category || '-'}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.brand || '-'}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.stockQuantity} {product.baseUnit}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.gst || '-'}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.sgst || '-'}</td>
+              <td className="border border-gray-300 px-2 py-1">{product.supplierName || '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-4 text-sm text-right">
+        Total Products: {products.length}
+      </div>
+    </div>
+  );
+});
+
 const ProductStockList = ({ setActivePage }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -66,6 +111,8 @@ const ProductStockList = ({ setActivePage }) => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedProductDetails, setSelectedProductDetails] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const printRef = useRef();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -146,18 +193,14 @@ const ProductStockList = ({ setActivePage }) => {
   const categories = ['All', ...new Set(products.map(product => product.category).filter(Boolean))];
 
   const handleDelete = async (id) => {
-    // if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-    //   return;
-    // }
-
     try {
       setIsDeleting(true);
       await api.delete(`/products/${id}`);
-      
+
       // Optimistic update - remove the product from state immediately
       setProducts(prev => prev.filter(product => product._id !== id));
       setFilteredProducts(prev => prev.filter(product => product._id !== id));
-      
+
       toast.success('Product deleted successfully!');
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -169,8 +212,6 @@ const ProductStockList = ({ setActivePage }) => {
 
   const handleEdit = (productId) => {
     console.log('Edit product with ID:', productId);
-    // Implement your edit navigation logic here
-    // For example: navigate(`/edit-product/${productId}`);
   };
 
   const handleViewDetails = (product) => {
@@ -179,9 +220,14 @@ const ProductStockList = ({ setActivePage }) => {
   };
 
   const handleAddProduct = () => {
-    // Implement your add product navigation logic here
-    // For example: navigate('/add-product');
     console.log('Navigate to add product page');
+  };
+
+  const getFilterType = () => {
+    if (selectedGstCategory === 'All') return 'All GST Categories';
+    if (selectedGstCategory === 'GST') return 'GST Products';
+    if (selectedGstCategory === 'Non-GST') return 'Non-GST Products';
+    return 'All Products';
   };
 
   if (isLoading) {
@@ -191,6 +237,28 @@ const ProductStockList = ({ setActivePage }) => {
       </div>
     );
   }
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Product Stock Report</title>
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        ${printRef.current.innerHTML}
+      </body>
+    </html>
+  `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+  };
 
   return (
     <div className="container mx-auto px-2 py-2">
@@ -231,15 +299,30 @@ const ProductStockList = ({ setActivePage }) => {
                   <option value="GST">GST Products</option>
                   <option value="Non-GST">Non-GST Products</option>
                 </select>
-                <button 
+                <button
+                  onClick={handlePrint}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                >
+                  <FiPrinter /> Print
+                </button>
+                <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                    onClick={() => setActivePage('Products')}
+                  onClick={() => setActivePage('Products')}
                 >
                   <FiPlus /> Add Product
                 </button>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Hidden printable component */}
+        <div className="hidden">
+          <PrintableProducts
+            ref={printRef}
+            products={filteredProducts}
+            filterType={getFilterType()}
+          />
         </div>
 
         {/* Product Table */}
@@ -324,14 +407,6 @@ const ProductStockList = ({ setActivePage }) => {
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                      {/* <button
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                        onClick={() => handleEdit(product._id)}
-                        title="Edit Product"
-                        disabled={isDeleting}
-                      >
-                        <FiEdit className="inline" />
-                      </button> */}
                       <button
                         className="text-red-600 hover:text-red-900"
                         onClick={() => handleDelete(product._id)}
